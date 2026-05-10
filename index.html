@@ -7,24 +7,18 @@
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; background: #f4f6f8; color: #222; overscroll-behavior: none; }
-  
-  /* Header UI */
   header { position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%); border-bottom: 1px solid #e5e7eb; padding: 12px 14px 0; }
   .header-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 12px; }
   .title { display: flex; align-items: center; gap: 10px; }
   .line-badge { width: 36px; height: 36px; border-radius: 50%; background: var(--line-color, #CD7C2F); color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
   .title-text { font-size: 17px; font-weight: 700; }
   .subtitle { font-size: 12px; color: #6b7280; margin-top: 2px; }
-  
-  /* Controls */
   .controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .line-select { padding: 7px 10px; border-radius: 10px; border: 1px solid #d1d5db; background: white; font-size: 14px; font-weight: 600; }
   .icon-btn { padding: 7px 11px; border-radius: 10px; border: 1px solid #d1d5db; background: white; font-size: 13px; font-weight: 600; cursor: pointer; }
   .icon-btn.primary { background: var(--line-color, #CD7C2F); color: white; border-color: transparent; }
   .stop-btn { padding: 7px 11px; border-radius: 10px; border: none; background: #ef4444; color: white; font-weight: 600; font-size: 13px; cursor: pointer; display: none; }
   .stop-btn.active { display: inline-block; }
-  
-  /* Auto Panel */
   .auto-panel { padding: 12px 0; border-top: 1px solid #e5e7eb; display: none; flex-wrap: wrap; gap: 8px; align-items: center; }
   .auto-panel.open { display: flex; }
   .auto-panel label { font-size: 12px; color: #4b5563; font-weight: 600; }
@@ -32,51 +26,38 @@
   .auto-panel .hint { font-size: 11px; color: #6b7280; flex-basis: 100%; margin-top: 4px; }
   .speed-control { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
   .speed-control select { padding: 4px 6px; border-radius: 6px; border: 1px solid #d1d5db; background: white; font-size: 12px; }
-
-  /* LED Display Board */
   .led-board { background: #111; color: #ff9900; height: 36px; overflow: hidden; position: relative; border-radius: 4px; border: 2px solid #333; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
   .led-text { position: absolute; white-space: nowrap; font-family: "Courier New", Courier, monospace; font-weight: bold; font-size: 16px; line-height: 32px; letter-spacing: 1px; transform: translateX(100%); text-shadow: 0 0 4px #ff9900; }
   .led-board.active .led-text { animation: scrollLeft 15s linear infinite; }
   @keyframes scrollLeft { 0% { transform: translateX(100vw); } 100% { transform: translateX(-150%); } }
-
-  /* Map & Stations */
   main { padding: 14px 12px 100px; max-width: 720px; margin: 0 auto; }
   .helper { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 10px 14px; border-radius: 12px; font-size: 12.5px; margin-bottom: 14px; line-height: 1.5; }
   .map { position: relative; padding-left: 56px; }
   .line-track { position: absolute; left: 30px; top: 22px; bottom: 22px; width: 8px; background: var(--line-color, #CD7C2F); border-radius: 4px; z-index: 0; }
-  
   .station { position: relative; display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 0; margin-left: -34px; cursor: pointer; border-radius: 12px; transition: background 0.15s, transform 0.1s; user-select: none; }
   .station:hover { background: rgba(0,0,0,0.03); }
   .station:active { transform: scale(0.98); }
   .station.active { background: color-mix(in srgb, var(--line-color, #CD7C2F) 14%, transparent); }
-  
   .dot { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: white; border: 5px solid var(--line-color, #CD7C2F); box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 2; transition: transform 0.2s; position: relative; }
   .station.active .dot { transform: scale(1.25); box-shadow: 0 0 0 6px color-mix(in srgb, var(--line-color, #CD7C2F) 25%, transparent); }
   .dot.transfer { width: 26px; height: 26px; border-width: 4px; background: white; }
   .dot.transfer::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--line-color, #CD7C2F); opacity: 0.18; }
   .dot.terminal { background: var(--line-color, #CD7C2F); }
-  
-  /* Train Icon */
   .train-icon { position: absolute; left: 22px; transform: translate(-50%, -50%); width: 44px; height: 26px; background: var(--line-color, #CD7C2F); border-radius: 6px; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; z-index: 5; transition: top 0.6s cubic-bezier(0.45, 0, 0.55, 1); pointer-events: none; opacity: 0; }
   .train-icon::after { content: '🪟'; font-size: 10px; letter-spacing: 2px; }
   .train-icon.visible { opacity: 1; }
-  
   .station-info { flex: 1; min-width: 0; }
   .station-name-ko { font-size: 18px; font-weight: 700; color: #111827; line-height: 1.2; }
   .station-name-en { font-size: 12px; color: #6b7280; margin-top: 2px; }
-  
   .transfers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
   .transfer-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 11px; font-weight: 700; color: white; }
-  
   .play-icon { flex: 0 0 auto; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; font-size: 18px; }
   .station.active .play-icon { opacity: 1; }
-  
   .loop-section { border: 2px dashed color-mix(in srgb, var(--line-color, #CD7C2F) 40%, white); border-radius: 16px; padding: 6px 0; margin-bottom: 8px; margin-left: -10px; padding-left: 10px; position: relative; }
   .loop-label { position: absolute; top: -10px; right: 16px; background: white; padding: 0 8px; font-size: 11px; font-weight: 700; color: var(--line-color, #CD7C2F); }
 </style>
 </head>
 <body>
-
 <header style="--line-color: #CD7C2F">
   <div class="header-row">
     <div class="title">
@@ -88,23 +69,16 @@
     </div>
     <div class="controls">
       <div class="speed-control"><span>속도</span>
-        <select id="speedSelect">
-          <option value="0.85">느리게</option>
-          <option value="0.95" selected>보통</option>
-          <option value="1.1">빠르게</option>
-        </select>
+        <select id="speedSelect"><option value="0.85">느리게</option><option value="0.95" selected>보통</option><option value="1.1">빠르게</option></select>
       </div>
       <select class="line-select" id="lineSelect"></select>
       <button class="icon-btn" id="autoToggleBtn">🚂 자동운행</button>
       <button class="stop-btn" id="stopBtn">■ 정지</button>
     </div>
   </div>
-  
-  <!-- 지하철 전광판 UI -->
   <div class="led-board" id="ledBoard">
     <div class="led-text" id="ledText">안전하고 편리한 지하철을 이용해 주셔서 감사합니다.</div>
   </div>
-
   <div class="auto-panel" id="autoPanel">
     <label>출발</label><select id="autoStart"></select>
     <label>도착</label><select id="autoEnd"></select>
@@ -112,7 +86,6 @@
     <div class="hint">기차가 자동으로 역마다 멈추며 안내방송을 합니다.</div>
   </div>
 </header>
-
 <main>
   <div class="helper">
     💡 <b>역 탭</b>: 안내방송 자동 재생 (다시 탭하면 정지)<br>
@@ -120,15 +93,11 @@
   </div>
   <div class="map" id="map"><div class="train-icon" id="trainIcon"></div></div>
 </main>
-
 <script>
-// 환승 노선 정보 및 색상
 const TRANSFER_COLORS = { '1':'#0052A4','2':'#00A84D','3':'#EF7C1C','4':'#00A5DE','5':'#996CAC','6':'#CD7C2F','7':'#747F00','8':'#E6186C','9':'#BDB092','경의중앙':'#77C4A3','공항철도':'#0090D2','경춘':'#0C8E72','우이신설':'#B7C450','신분당':'#D4003B','수인분당':'#FABE00','GTX-A':'#9A6292' };
 const TRANSFER_NAMES_KO = { '1':'1호선','2':'2호선','3':'3호선','4':'4호선','5':'5호선','6':'6호선','7':'7호선','8':'8호선','9':'9호선','경의중앙':'경의중앙선','공항철도':'공항철도','경춘':'경춘선','우이신설':'우이신설선','신분당':'신분당선','수인분당':'수인분당선','GTX-A':'GTX-A' };
 const TRANSFER_NAMES_EN = { '1':'Line number 1','2':'Line number 2','3':'Line number 3','4':'Line number 4','5':'Line number 5','6':'Line number 6','7':'Line number 7','8':'Line number 8','9':'Line number 9','경의중앙':'the Gyeongui-Jungang Line','공항철도':'the Airport Railroad','경춘':'the Gyeongchun Line','우이신설':'the Ui-Sinseol Line','신분당':'the Shinbundang Line','수인분당':'the Suin-Bundang Line','GTX-A':'GTX-A' };
 const TRANSFER_BADGE = { '경의중앙':'경중','공항철도':'공항','경춘':'경춘','우이신설':'우이','신분당':'신분당','수인분당':'수분','GTX-A':'GTX' };
-
-// 원본 데이터 전체 복원
 const lineData = {
 '6': { name:'6호선', nameEn:'Line 6', color:'#CD7C2F', badge:'6', stations:[
   { name:'응암', nameEn:'Eungam', transfers:[], doorDirection:null, loopStart:true },
@@ -368,11 +337,8 @@ const lineData = {
   { name:'용문', nameEn:'Yongmun', transfers:[], doorDirection:null }
 ]}
 };
-
 let currentLine = '6', currentStationIdx = -1, isPlaying = false, speechRate = 0.95;
 let koreanVoice = null, englishVoice = null, autoMode = false, autoCancel = false;
-
-// 보이스 로드 (한글, 영문 최적화)
 function loadVoices() {
   const voices = speechSynthesis.getVoices();
   koreanVoice = voices.find(v => v.lang === 'ko-KR' && /female|여성|Yuna|Heami/i.test(v.name)) || voices.find(v => v.lang === 'ko-KR');
@@ -381,12 +347,9 @@ function loadVoices() {
 loadVoices();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
 
-// 안내방송 텍스트 및 속성 생성
 function buildAnnouncementChunks(station) {
   const chunks = [];
   const isTransfer = station.transfers && station.transfers.length > 0;
-  
-  // 1. 한국어 텍스트 (마침표를 활용하여 자연스럽게 끊어 읽기)
   let koText;
   if (isTransfer) {
     const tt = station.transfers.map(t => TRANSFER_NAMES_KO[t] || (t+'호선')).join(', ');
@@ -394,44 +357,32 @@ function buildAnnouncementChunks(station) {
   } else {
     koText = `이번 역은, ${station.name}. ${station.name} 역입니다.`;
   }
-  
   if (station.doorDirection === 'left') koText += ' 내리실 문은, 왼쪽입니다.';
   else if (station.doorDirection === 'right') koText += ' 내리실 문은, 오른쪽입니다.';
-  
   chunks.push({ text: koText, lang: 'ko-KR', voice: koreanVoice });
-
-  // 2. 영어 텍스트 (문장 형태로 결합하여 영어 음성이 온전히 읽도록 처리)
   let enText = `This stop is, ${station.nameEn}. ${station.nameEn}.`;
   if (isTransfer) {
     const tt = station.transfers.map(t => TRANSFER_NAMES_EN[t] || t).join(', ');
     enText += ` You can transfer to, ${tt}.`;
   }
-  
   if (station.doorDirection === 'left') enText += ' The doors are on your left.';
   else if (station.doorDirection === 'right') enText += ' The doors are on your right.';
-  
   chunks.push({ text: enText, lang: 'en-US', voice: englishVoice });
-  
   return chunks;
 }
 
-// 음성 발화 (순차 실행)
 function speakChunk(chunk) {
   return new Promise(resolve => {
     if (!chunk.text) { resolve(); return; }
     const u = new SpeechSynthesisUtterance(chunk.text);
-    u.lang = chunk.lang; 
-    u.rate = speechRate; 
-    
+    u.lang = chunk.lang;
+    u.rate = speechRate;
     if (chunk.voice) u.voice = chunk.voice;
-    
-    // 약간의 딜레이를 주어 문장 사이 호흡 마련
     u.onend = () => setTimeout(resolve, 300);
     u.onerror = () => resolve();
     speechSynthesis.speak(u);
   });
 }
-
 async function speakChain(chunks) {
   for (const chunk of chunks) {
     if (!isPlaying && !autoMode) return;
@@ -440,28 +391,18 @@ async function speakChain(chunks) {
   }
 }
 
-// 안내방송 실행 메인 함수 (차임벨 제거됨)
 async function announce(idx) {
   const line = lineData[currentLine];
   const station = line.stations[idx];
   if (!station) return;
-  
   if (isPlaying && currentStationIdx === idx && !autoMode) { stopAnnounce(); return; }
-  
   stopAnnounce();
-  
-  currentStationIdx = idx; 
-  isPlaying = true; 
-  autoCancel = false;
-  
+  currentStationIdx = idx; isPlaying = true; autoCancel = false;
   updateUI();
   setLedBoard(`이번 역은 ${station.name} 역입니다. This stop is ${station.nameEn}.`);
   moveTrainTo(idx);
-  
   if (autoCancel) return;
-  
   await speakChain(buildAnnouncementChunks(station));
-  
   if (!autoMode) { isPlaying = false; currentStationIdx = -1; updateUI(); setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.'); }
 }
 
@@ -469,45 +410,33 @@ async function startAutoRun() {
   const line = lineData[currentLine];
   const startIdx = parseInt(document.getElementById('autoStart').value);
   const endIdx = parseInt(document.getElementById('autoEnd').value);
-  
   if (isNaN(startIdx) || isNaN(endIdx) || startIdx === endIdx) { alert('출발역과 도착역을 다르게 골라주세요!'); return; }
-  
   stopAnnounce();
   await new Promise(r => setTimeout(r, 100));
-  
   autoMode = true; autoCancel = false; isPlaying = true;
   updateUI();
-  
   const step = startIdx < endIdx ? 1 : -1;
   let idx = startIdx;
-  
   while (idx !== endIdx + step) {
     if (autoCancel) break;
     currentStationIdx = idx; updateUI(); moveTrainTo(idx);
-    
     setLedBoard(`이번 역은 ${line.stations[idx].name} 역입니다.`);
-    
     if (autoCancel) break;
     await speakChain(buildAnnouncementChunks(line.stations[idx]));
-    
     if (autoCancel) break;
     if (idx !== endIdx) {
       setLedBoard('열차가 곧 출발합니다. 출입문 닫힙니다.');
       await new Promise(r => setTimeout(r, 1000));
-      
       const nextStation = line.stations[idx + step];
       setLedBoard(`다음 역은 ${nextStation.name} 역입니다.`);
       await speakChunk({ text: `다음 역은, ${nextStation.name}. ${nextStation.name}, 역입니다.`, lang: 'ko-KR', voice: koreanVoice });
-      
       if (autoCancel) break;
       await new Promise(r => setTimeout(r, 800));
     }
     idx += step;
   }
-  
   setLedBoard(autoCancel ? '운행이 중단되었습니다.' : '종착역에 도착했습니다. 안녕히 가십시오.');
   await new Promise(r => setTimeout(r, 2000));
-  
   autoMode = false; isPlaying = false; currentStationIdx = -1;
   hideTrain(); updateUI(); setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.');
 }
@@ -519,7 +448,6 @@ function stopAnnounce() {
   setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.');
 }
 
-// UI 렌더링 및 제어 함수들
 function moveTrainTo(idx) {
   const train = document.getElementById('trainIcon');
   const target = Array.from(document.querySelectorAll('.station')).find(el => parseInt(el.dataset.idx) === idx);
@@ -531,25 +459,19 @@ function moveTrainTo(idx) {
   train.classList.add('visible');
   target.scrollIntoView({ behavior:'smooth', block:'center' });
 }
-
 function hideTrain() { document.getElementById('trainIcon').classList.remove('visible'); }
-
 function updateUI() {
   document.querySelectorAll('.station').forEach(el => el.classList.toggle('active', parseInt(el.dataset.idx) === currentStationIdx));
   document.getElementById('stopBtn').classList.toggle('active', isPlaying);
 }
-
 function setLedBoard(text) {
   const board = document.getElementById('ledBoard');
   const textEl = document.getElementById('ledText');
-  
-  // 애니메이션 재시작을 위한 트릭
   board.classList.remove('active');
-  void board.offsetWidth; 
-  textEl.innerHTML = text + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + text; 
+  void board.offsetWidth;
+  textEl.innerHTML = text + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + text;
   board.classList.add('active');
 }
-
 function renderLineSelect() {
   const sel = document.getElementById('lineSelect');
   sel.innerHTML = '';
@@ -560,7 +482,6 @@ function renderLineSelect() {
   });
   sel.value = currentLine;
 }
-
 function renderAutoSelects() {
   const line = lineData[currentLine];
   const start = document.getElementById('autoStart'), end = document.getElementById('autoEnd');
@@ -571,7 +492,6 @@ function renderAutoSelects() {
   });
   start.value = 0; end.value = line.stations.length - 1;
 }
-
 function renderLine(lineKey) {
   const line = lineData[lineKey];
   document.documentElement.style.setProperty('--line-color', line.color);
@@ -580,17 +500,13 @@ function renderLine(lineKey) {
   document.getElementById('lineBadge').style.background = line.color;
   document.getElementById('autoPlayBtn').style.background = line.color;
   document.getElementById('subtitle').textContent = line.name + ' · ' + line.stations.length + '개 역';
-  
   const map = document.getElementById('map');
   const train = document.getElementById('trainIcon');
   map.innerHTML = ''; map.appendChild(train);
-  
   const track = document.createElement('div'); track.className = 'line-track';
   map.appendChild(track);
-  
   const loopStations = line.stations.filter(s => s.loopStart || s.inLoop || s.loopEnd);
   const mainStations = line.stations.filter(s => !s.loopStart && !s.inLoop && !s.loopEnd);
-  
   if (loopStations.length > 0) {
     const loopBox = document.createElement('div'); loopBox.className = 'loop-section';
     loopBox.style.setProperty('--line-color', line.color);
@@ -599,33 +515,26 @@ function renderLine(lineKey) {
     loopStations.forEach((s) => loopBox.appendChild(createStationElement(s, line.stations.indexOf(s), line)));
     map.appendChild(loopBox);
   }
-  
   mainStations.forEach((s, i) => {
     const idx = line.stations.indexOf(s);
     const el = createStationElement(s, idx, line);
     if (i === 0 || i === mainStations.length - 1) el.querySelector('.dot').classList.add('terminal');
     map.appendChild(el);
   });
-  
   hideTrain(); renderAutoSelects();
 }
-
 function createStationElement(station, idx, line) {
   const el = document.createElement('div');
   el.className = 'station'; el.dataset.idx = idx;
   el.style.setProperty('--line-color', line.color);
-  
   const dot = document.createElement('div');
   dot.className = 'dot' + (station.transfers.length > 0 ? ' transfer' : '');
   el.appendChild(dot);
-  
   const info = document.createElement('div'); info.className = 'station-info';
   const nameKo = document.createElement('div'); nameKo.className = 'station-name-ko'; nameKo.textContent = station.name;
   info.appendChild(nameKo);
-  
   const nameEn = document.createElement('div'); nameEn.className = 'station-name-en'; nameEn.textContent = station.nameEn;
   info.appendChild(nameEn);
-  
   if (station.transfers.length > 0) {
     const transfers = document.createElement('div'); transfers.className = 'transfers';
     station.transfers.forEach(t => {
@@ -637,22 +546,16 @@ function createStationElement(station, idx, line) {
     info.appendChild(transfers);
   }
   el.appendChild(info);
-  
   const playIcon = document.createElement('div'); playIcon.className = 'play-icon'; playIcon.textContent = '🔊';
   el.appendChild(playIcon);
-  
   el.addEventListener('click', () => { if (autoMode) return; announce(idx); });
   return el;
 }
-
-// 이벤트 리스너 세팅
 document.getElementById('lineSelect').addEventListener('change', (e) => { currentLine = e.target.value; stopAnnounce(); renderLine(currentLine); });
 document.getElementById('speedSelect').addEventListener('change', (e) => { speechRate = parseFloat(e.target.value); });
 document.getElementById('stopBtn').addEventListener('click', stopAnnounce);
 document.getElementById('autoToggleBtn').addEventListener('click', () => { document.getElementById('autoPanel').classList.toggle('open'); });
 document.getElementById('autoPlayBtn').addEventListener('click', () => { startAutoRun(); });
-
-// 초기화
 renderLineSelect();
 renderLine(currentLine);
 setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.');
