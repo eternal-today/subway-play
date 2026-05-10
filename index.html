@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>지하철 놀이 🚇</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    background: #f4f6f8;
+    color: #222;
+    overscroll-behavior: none;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+    border-bottom: 1px solid #e5e7eb;
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+  }
+  .title { display: flex; align-items: center; gap: 10px; }
+  .line-badge {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--line-color, #CD7C2F);
+    color: white; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .title-text { font-size: 17px; font-weight: 700; }
+  .subtitle { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .controls { display: flex; align-items: center; gap: 8px; }
+  .line-select {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .stop-btn {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: none;
+    background: #ef4444;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    display: none;
+  }
+  .stop-btn.active { display: inline-block; }
+
+  main {
+    padding: 16px 12px 80px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .helper {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+
+  .map {
+    position: relative;
+    padding-left: 56px;
+  }
+  .line-track {
+    position: absolute;
+    left: 30px;
+    top: 22px;
+    bottom: 22px;
+    width: 8px;
+    background: var(--line-color, #CD7C2F);
+    border-radius: 4px;
+    z-index: 0;
+  }
+  /* loop indicator */
+  .loop-marker {
+    position: absolute;
+    left: -8px;
+    width: 32px; height: 32px;
+    border: 4px solid var(--line-color, #CD7C2F);
+    border-radius: 50%;
+    background: white;
+    z-index: 1;
+  }
+
+  .station {
+    position: relative;
+    display: flex; align-items: center;
+    gap: 12px;
+    padding: 8px 12px 8px 0;
+    margin-left: -34px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background 0.15s, transform 0.1s;
+    user-select: none;
+  }
+  .station:hover { background: rgba(0,0,0,0.03); }
+  .station:active { transform: scale(0.98); }
+  .station.active {
+    background: rgba(205, 124, 47, 0.12);
+    background: color-mix(in srgb, var(--line-color, #CD7C2F) 14%, transparent);
+  }
+
+  .dot {
+    flex: 0 0 auto;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: white;
+    border: 5px solid var(--line-color, #CD7C2F);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    z-index: 2;
+    transition: transform 0.2s;
+  }
+  .station.active .dot {
+    transform: scale(1.25);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--line-color, #CD7C2F) 25%, transparent);
+  }
+  .dot.transfer {
+    width: 26px; height: 26px;
+    border-width: 4px;
+    background: white;
+    position: relative;
+  }
+  .dot.transfer::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: var(--line-color, #CD7C2F);
+    opacity: 0.18;
+  }
+
+  .station-info { flex: 1; min-width: 0; }
+  .station-name-ko {
+    font-size: 18px; font-weight: 700;
+    color: #111827;
+    line-height: 1.2;
+  }
+  .station-name-en {
+    font-size: 12px; color: #6b7280;
+    margin-top: 2px;
+  }
+  .transfers {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-top: 6px;
+  }
+  .transfer-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    font-size: 11px; font-weight: 700; color: white;
+  }
+  .play-icon {
+    flex: 0 0 auto;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--line-color, #CD7C2F);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .station.active .play-icon { opacity: 1; }
+
+  .loop-section {
+    border: 2px dashed color-mix(in srgb, var(--line-color, #CD7C2F) 40%, white);
+    border-radius: 16px;
+    padding: 6px 0 6px 0;
+    margin-bottom: 8px;
+    margin-left: -10px;
+    padding-left: 10px;
+    position: relative;
+  }
+  .loop-label {
+    position: absolute;
+    top: -10px; right: 16px;
+    background: white;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--line-color, #CD7C2F);
+  }
+
+  /* Now playing footer */
+  .now-playing {
+    position: fixed;
+    left: 50%; transform: translateX(-50%);
+    bottom: 16px;
+    background: rgba(17, 24, 39, 0.95);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    max-width: 90vw;
+    z-index: 20;
+  }
+  .now-playing.active { display: flex; }
+  .pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #34d399;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.4); }
+  }
+
+  .speed-control {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .speed-control select {
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header style="--line-color: #CD7C2F">
+  <div class="title">
+    <div class="line-badge" id="lineBadge">6</div>
+    <div>
+      <div class="title-text">지하철 놀이</div>
+      <div class="subtitle">역을 누르면 안내 방송이 나와요</div>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="speed-control">
+      <span>속도</span>
+      <select id="speedSelect">
+        <option value="0.85">느리게</option>
+        <option value="0.95" selected>보통</option>
+        <option value="1.1">빠르게</option>
+      </select>
+    </div>
+    <select class="line-select" id="lineSelect">
+      <option value="6">6호선</option>
+    </select>
+    <button class="stop-btn" id="stopBtn">■ 정지</button>
+  </div>
+</header>
+
+<main>
+  <div class="helper">
+    💡 역을 탭하면 한국어 안내방송 후 영어 안내가 자동으로 재생돼요. 다시 탭하면 멈춥니다.<br>
+    🔁 6호선 위쪽은 <b>응암순환 구간</b>이에요. 다른 노선은 추후 추가 예정이에요!
+  </div>
+  <div class="map" id="map"></div>
+</main>
+
+<div class="now-playing" id="nowPlaying">
+  <span class="pulse"></span>
+  <span id="nowPlayingText">방송 중...</span>
+</div>
+
+<script>
+/* =========================================================================
+ * 노선 데이터 — 확장 가능한 구조
+ * ---------------------------------------------------------------------
+ * 새 노선 추가 시: lineData 객체에 호선 키 추가만 하면 됨
+ * 내리실 문 방향: doorDirection 필드 ('left' | 'right' | null)
+ *   → null 이면 안내 방송에서 문 멘트는 생략됨
+ *   → 추후 Apps Script 등에서 채워주면 자동 반영
+ * 환승역: transfers 배열에 호선 코드 (string)
+ *   → '1','2','3','4','5','6','7','8','9' 또는 '경의중앙','공항철도','경춘','우이신설','신분당','수인분당' 등
+ * ========================================================================= */
+
+const TRANSFER_COLORS = {
+  '1': '#0052A4', '2': '#00A84D', '3': '#EF7C1C', '4': '#00A5DE',
+  '5': '#996CAC', '6': '#CD7C2F', '7': '#747F00', '8': '#E6186C', '9': '#BDB092',
+  '경의중앙': '#77C4A3', '공항철도': '#0090D2', '경춘': '#0C8E72',
+  '우이신설': '#B7C450', '신분당': '#D4003B', '수인분당': '#FABE00',
+  'GTX-A': '#9A6292'
+};
+
+const TRANSFER_NAMES = {
+  '1':'1호선','2':'2호선','3':'3호선','4':'4호선','5':'5호선',
+  '6':'6호선','7':'7호선','8':'8호선','9':'9호선',
+  '경의중앙':'경의중앙선','공항철도':'공항철도','경춘':'경춘선',
+  '우이신설':'우이신설선','신분당':'신분당선','수인분당':'수인분당선',
+  'GTX-A':'GTX-A'
+};
+
+const TRANSFER_NAMES_EN = {
+  '1':'Line 1','2':'Line 2','3':'Line 3','4':'Line 4','5':'Line 5',
+  '6':'Line 6','7':'Line 7','8':'Line 8','9':'Line 9',
+  '경의중앙':'the Gyeongui-Jungang Line','공항철도':'the Airport Railroad',
+  '경춘':'the Gyeongchun Line','우이신설':'the Ui-Sinseol Line',
+  '신분당':'the Shinbundang Line','수인분당':'the Suin-Bundang Line',
+  'GTX-A':'GTX-A'
+};
+
+const lineData = {
+  '6': {
+    name: '6호선',
+    nameEn: 'Line 6',
+    color: '#CD7C2F',
+    badge: '6',
+    /* 응암순환 → 새절 → ... → 봉화산 → 신내 (총 39역) */
+    stations: [
+      // 응암순환 루프 (응암 → 역촌 → 불광 → 독바위 → 연신내 → 구산 → 응암)
+      { name:'응암', nameEn:'Eungam', transfers:[], doorDirection:null, loopStart:true },
+      { name:'역촌', nameEn:'Yeokchon', transfers:[], doorDirection:null, inLoop:true },
+      { name:'불광', nameEn:'Bulgwang', transfers:['3'], doorDirection:null, inLoop:true },
+      { name:'독바위', nameEn:'Dokbawi', transfers:[], doorDirection:null, inLoop:true },
+      { name:'연신내', nameEn:'Yeonsinnae', transfers:['3'], doorDirection:null, inLoop:true },
+      { name:'구산', nameEn:'Gusan', transfers:[], doorDirection:null, loopEnd:true },
+      // 본선
+      { name:'새절', nameEn:'Saejeol', transfers:[], doorDirection:null },
+      { name:'증산', nameEn:'Jeungsan', transfers:[], doorDirection:null },
+      { name:'디지털미디어시티', nameEn:'Digital Media City', transfers:['경의중앙','공항철도'], doorDirection:null },
+      { name:'월드컵경기장', nameEn:'World Cup Stadium', transfers:[], doorDirection:null },
+      { name:'마포구청', nameEn:'Mapo-gu Office', transfers:[], doorDirection:null },
+      { name:'망원', nameEn:'Mangwon', transfers:[], doorDirection:null },
+      { name:'합정', nameEn:'Hapjeong', transfers:['2'], doorDirection:null },
+      { name:'상수', nameEn:'Sangsu', transfers:[], doorDirection:null },
+      { name:'광흥창', nameEn:'Gwangheungchang', transfers:[], doorDirection:null },
+      { name:'대흥', nameEn:'Daeheung', transfers:[], doorDirection:null },
+      { name:'공덕', nameEn:'Gongdeok', transfers:['5','경의중앙','공항철도'], doorDirection:null },
+      { name:'효창공원앞', nameEn:'Hyochang Park', transfers:['경의중앙'], doorDirection:null },
+      { name:'삼각지', nameEn:'Samgakji', transfers:['4'], doorDirection:null },
+      { name:'녹사평', nameEn:'Noksapyeong', transfers:[], doorDirection:null },
+      { name:'이태원', nameEn:'Itaewon', transfers:[], doorDirection:null },
+      { name:'한강진', nameEn:'Hangangjin', transfers:[], doorDirection:null },
+      { name:'버티고개', nameEn:'Beotigogae', transfers:[], doorDirection:null },
+      { name:'약수', nameEn:'Yaksu', transfers:['3'], doorDirection:null },
+      { name:'청구', nameEn:'Cheonggu', transfers:['5'], doorDirection:null },
+      { name:'신당', nameEn:'Sindang', transfers:['2'], doorDirection:null },
+      { name:'동묘앞', nameEn:'Dongmyo', transfers:['1'], doorDirection:null },
+      { name:'창신', nameEn:'Changsin', transfers:[], doorDirection:null },
+      { name:'보문', nameEn:'Bomun', transfers:['우이신설'], doorDirection:null },
+      { name:'안암', nameEn:'Anam', transfers:[], doorDirection:null },
+      { name:'고려대', nameEn:'Korea University', transfers:[], doorDirection:null },
+      { name:'월곡', nameEn:'Wolgok', transfers:[], doorDirection:null },
+      { name:'상월곡', nameEn:'Sangwolgok', transfers:[], doorDirection:null },
+      { name:'돌곶이', nameEn:'Dolgoji', transfers:[], doorDirection:null },
+      { name:'석계', nameEn:'Seokgye', transfers:['1'], doorDirection:null },
+      { name:'태릉입구', nameEn:'Taereung', transfers:['7'], doorDirection:null },
+      { name:'화랑대', nameEn:'Hwarangdae(Seoul Women\'s Univ.)', transfers:[], doorDirection:null },
+      { name:'봉화산', nameEn:'Bonghwasan(Seoul Medical Center)', transfers:[], doorDirection:null },
+      { name:'신내', nameEn:'Sinnae', transfers:['경춘'], doorDirection:null }
+    ]
+  }
+  /* TODO: 다른 호선 추가
+  '1': { name:'1호선', nameEn:'Line 1', color:'#0052A4', badge:'1', stations:[...] },
+  '2': { ... },
+  ...
+  */
+};
+
+/* ===== 상태 ===== */
+let currentLine = '6';
+let currentStationIdx = -1;
+let isPlaying = false;
+let speechRate = 0.95;
+let koreanVoice = null;
+let englishVoice = null;
+
+/* ===== 음성 초기화 ===== */
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  // 한국어 여성 보이스 선호
+  koreanVoice = voices.find(v => v.lang === 'ko-KR' && /female|여성|Yuna|Heami/i.test(v.name))
+             || voices.find(v => v.lang === 'ko-KR')
+             || voices.find(v => v.lang.startsWith('ko'));
+  englishVoice = voices.find(v => v.lang === 'en-US' && /female|samantha|Karen/i.test(v.name))
+              || voices.find(v => v.lang === 'en-US')
+              || voices.find(v => v.lang.startsWith('en'));
+}
+loadVoices();
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+/* ===== 안내 방송 텍스트 생성 ===== */
+function buildKoreanAnnouncement(station, lineKey) {
+  let parts = [];
+  if (station.transfers && station.transfers.length > 0) {
+    const transferText = station.transfers
+      .map(t => TRANSFER_NAMES[t] || (t + '호선'))
+      .join(', ');
+    parts.push(`이번 역은 ${transferText} 열차로 갈아타실 수 있는 ${station.name}, ${station.name} 역입니다.`);
+  } else {
+    parts.push(`이번 역은 ${station.name}, ${station.name} 역입니다.`);
+  }
+  if (station.doorDirection === 'left') {
+    parts.push('내리실 문은 왼쪽입니다.');
+  } else if (station.doorDirection === 'right') {
+    parts.push('내리실 문은 오른쪽입니다.');
+  }
+  return parts.join(' ');
+}
+
+function buildEnglishAnnouncement(station) {
+  let parts = [`This stop is ${station.nameEn}, ${station.nameEn}.`];
+  if (station.transfers && station.transfers.length > 0) {
+    const transferText = station.transfers
+      .map(t => TRANSFER_NAMES_EN[t] || t)
+      .join(', ');
+    parts.push(`You can transfer to ${transferText}.`);
+  }
+  if (station.doorDirection === 'left') {
+    parts.push('The doors are on your left.');
+  } else if (station.doorDirection === 'right') {
+    parts.push('The doors are on your right.');
+  }
+  return parts.join(' ');
+}
+
+/* ===== 재생 ===== */
+function speak(text, lang, voice, onEnd) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = speechRate;
+  u.pitch = 1.0;
+  if (voice) u.voice = voice;
+  u.onend = onEnd;
+  u.onerror = onEnd;
+  speechSynthesis.speak(u);
+  return u;
+}
+
+function announce(idx) {
+  const line = lineData[currentLine];
+  const station = line.stations[idx];
+  if (!station) return;
+
+  // 이미 같은 역 재생 중이면 정지
+  if (isPlaying && currentStationIdx === idx) {
+    stopAnnounce();
+    return;
+  }
+
+  stopAnnounce();
+  currentStationIdx = idx;
+  isPlaying = true;
+  updateUI();
+
+  const koText = buildKoreanAnnouncement(station, currentLine);
+  const enText = buildEnglishAnnouncement(station);
+
+  setNowPlaying(`🔊 ${station.name} (${station.nameEn})`);
+
+  speak(koText, 'ko-KR', koreanVoice, () => {
+    if (!isPlaying) return;
+    setTimeout(() => {
+      if (!isPlaying) return;
+      speak(enText, 'en-US', englishVoice, () => {
+        isPlaying = false;
+        currentStationIdx = -1;
+        updateUI();
+      });
+    }, 250);
+  });
+}
+
+function stopAnnounce() {
+  speechSynthesis.cancel();
+  isPlaying = false;
+  currentStationIdx = -1;
+  updateUI();
+}
+
+/* ===== UI 렌더링 ===== */
+function renderLine(lineKey) {
+  const line = lineData[lineKey];
+  document.documentElement.style.setProperty('--line-color', line.color);
+  document.querySelector('header').style.setProperty('--line-color', line.color);
+  document.getElementById('lineBadge').textContent = line.badge;
+  document.getElementById('lineBadge').style.background = line.color;
+
+  const map = document.getElementById('map');
+  map.innerHTML = '';
+
+  // 트랙(라인) 배경
+  const track = document.createElement('div');
+  track.className = 'line-track';
+  map.appendChild(track);
+
+  // 루프 구간을 별도 컨테이너로 묶기
+  const loopStations = line.stations.filter(s => s.loopStart || s.inLoop || s.loopEnd);
+  const mainStations = line.stations.filter(s => !s.loopStart && !s.inLoop && !s.loopEnd);
+
+  if (loopStations.length > 0) {
+    const loopBox = document.createElement('div');
+    loopBox.className = 'loop-section';
+    loopBox.style.setProperty('--line-color', line.color);
+    const label = document.createElement('div');
+    label.className = 'loop-label';
+    label.textContent = '🔁 응암순환';
+    loopBox.appendChild(label);
+
+    loopStations.forEach((s) => {
+      const idx = line.stations.indexOf(s);
+      loopBox.appendChild(createStationElement(s, idx, line));
+    });
+    map.appendChild(loopBox);
+  }
+
+  mainStations.forEach((s) => {
+    const idx = line.stations.indexOf(s);
+    map.appendChild(createStationElement(s, idx, line));
+  });
+}
+
+function createStationElement(station, idx, line) {
+  const el = document.createElement('div');
+  el.className = 'station';
+  el.dataset.idx = idx;
+  el.style.setProperty('--line-color', line.color);
+
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (station.transfers.length > 0 ? ' transfer' : '');
+  el.appendChild(dot);
+
+  const info = document.createElement('div');
+  info.className = 'station-info';
+
+  const nameKo = document.createElement('div');
+  nameKo.className = 'station-name-ko';
+  nameKo.textContent = station.name;
+  info.appendChild(nameKo);
+
+  const nameEn = document.createElement('div');
+  nameEn.className = 'station-name-en';
+  nameEn.textContent = station.nameEn;
+  info.appendChild(nameEn);
+
+  if (station.transfers.length > 0) {
+    const transfers = document.createElement('div');
+    transfers.className = 'transfers';
+    station.transfers.forEach(t => {
+      const badge = document.createElement('span');
+      badge.className = 'transfer-badge';
+      badge.textContent = /^\d$/.test(t) ? t : (TRANSFER_NAMES[t] || t).replace('선','');
+      badge.style.background = TRANSFER_COLORS[t] || '#9ca3af';
+      transfers.appendChild(badge);
+    });
+    info.appendChild(transfers);
+  }
+
+  el.appendChild(info);
+
+  const playIcon = document.createElement('div');
+  playIcon.className = 'play-icon';
+  playIcon.innerHTML = '🔊';
+  el.appendChild(playIcon);
+
+  el.addEventListener('click', () => announce(idx));
+  return el;
+}
+
+function updateUI() {
+  document.querySelectorAll('.station').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.idx) === currentStationIdx);
+  });
+  document.getElementById('stopBtn').classList.toggle('active', isPlaying);
+  if (!isPlaying) {
+    document.getElementById('nowPlaying').classList.remove('active');
+  }
+}
+
+function setNowPlaying(text) {
+  const np = document.getElementById('nowPlaying');
+  document.getElementById('nowPlayingText').textContent = text;
+  np.classList.add('active');
+}
+
+/* ===== 이벤트 ===== */
+document.getElementById('lineSelect').addEventListener('change', (e) => {
+  currentLine = e.target.value;
+  stopAnnounce();
+  renderLine(currentLine);
+});
+document.getElementById('speedSelect').addEventListener('change', (e) => {
+  speechRate = parseFloat(e.target.value);
+});
+document.getElementById('stopBtn').addEventListener('click', stopAnnounce);
+
+/* ===== 시작 ===== */
+renderLine(currentLine);
+</script>
+</body>
+</html>
