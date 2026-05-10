@@ -6,600 +6,613 @@
 <title>지하철 놀이 🚇</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    margin: 0; padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
-    background: #f4f6f8;
-    color: #222;
-    overscroll-behavior: none;
-  }
-  header {
-    position: sticky; top: 0; z-index: 10;
-    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
-    border-bottom: 1px solid #e5e7eb;
-    padding: 14px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 10px;
-  }
+  html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; background: #f4f6f8; color: #222; overscroll-behavior: none; }
+  header { position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%); border-bottom: 1px solid #e5e7eb; padding: 12px 14px; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .title { display: flex; align-items: center; gap: 10px; }
-  .line-badge {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: var(--line-color, #CD7C2F);
-    color: white; font-weight: 800;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  }
+  .line-badge { width: 36px; height: 36px; border-radius: 50%; background: var(--line-color, #CD7C2F); color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
   .title-text { font-size: 17px; font-weight: 700; }
   .subtitle { font-size: 12px; color: #6b7280; margin-top: 2px; }
-  .controls { display: flex; align-items: center; gap: 8px; }
-  .line-select {
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: 1px solid #d1d5db;
-    background: white;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .stop-btn {
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: none;
-    background: #ef4444;
-    color: white;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    display: none;
-  }
+  .controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .line-select { padding: 7px 10px; border-radius: 10px; border: 1px solid #d1d5db; background: white; font-size: 14px; font-weight: 600; }
+  .icon-btn { padding: 7px 11px; border-radius: 10px; border: 1px solid #d1d5db; background: white; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .icon-btn.primary { background: var(--line-color, #CD7C2F); color: white; border-color: transparent; }
+  .stop-btn { padding: 7px 11px; border-radius: 10px; border: none; background: #ef4444; color: white; font-weight: 600; font-size: 13px; cursor: pointer; display: none; }
   .stop-btn.active { display: inline-block; }
-
-  main {
-    padding: 16px 12px 80px;
-    max-width: 720px;
-    margin: 0 auto;
-  }
-  .helper {
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    color: #9a3412;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 13px;
-    margin-bottom: 14px;
-    line-height: 1.5;
-  }
-
-  .map {
-    position: relative;
-    padding-left: 56px;
-  }
-  .line-track {
-    position: absolute;
-    left: 30px;
-    top: 22px;
-    bottom: 22px;
-    width: 8px;
-    background: var(--line-color, #CD7C2F);
-    border-radius: 4px;
-    z-index: 0;
-  }
-  /* loop indicator */
-  .loop-marker {
-    position: absolute;
-    left: -8px;
-    width: 32px; height: 32px;
-    border: 4px solid var(--line-color, #CD7C2F);
-    border-radius: 50%;
-    background: white;
-    z-index: 1;
-  }
-
-  .station {
-    position: relative;
-    display: flex; align-items: center;
-    gap: 12px;
-    padding: 8px 12px 8px 0;
-    margin-left: -34px;
-    cursor: pointer;
-    border-radius: 12px;
-    transition: background 0.15s, transform 0.1s;
-    user-select: none;
-  }
+  .auto-panel { margin-top: 10px; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; display: none; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .auto-panel.open { display: flex; }
+  .auto-panel label { font-size: 12px; color: #4b5563; font-weight: 600; }
+  .auto-panel select { padding: 7px 10px; border-radius: 8px; border: 1px solid #d1d5db; background: white; font-size: 13px; min-width: 110px; }
+  .auto-panel .hint { font-size: 11px; color: #6b7280; flex-basis: 100%; margin-top: 4px; }
+  main { padding: 14px 12px 100px; max-width: 720px; margin: 0 auto; }
+  .helper { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 10px 14px; border-radius: 12px; font-size: 12.5px; margin-bottom: 14px; line-height: 1.5; }
+  .map { position: relative; padding-left: 56px; }
+  .line-track { position: absolute; left: 30px; top: 22px; bottom: 22px; width: 8px; background: var(--line-color, #CD7C2F); border-radius: 4px; z-index: 0; }
+  .station { position: relative; display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 0; margin-left: -34px; cursor: pointer; border-radius: 12px; transition: background 0.15s, transform 0.1s; user-select: none; }
   .station:hover { background: rgba(0,0,0,0.03); }
   .station:active { transform: scale(0.98); }
-  .station.active {
-    background: rgba(205, 124, 47, 0.12);
-    background: color-mix(in srgb, var(--line-color, #CD7C2F) 14%, transparent);
-  }
-
-  .dot {
-    flex: 0 0 auto;
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: white;
-    border: 5px solid var(--line-color, #CD7C2F);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    z-index: 2;
-    transition: transform 0.2s;
-  }
-  .station.active .dot {
-    transform: scale(1.25);
-    box-shadow: 0 0 0 6px color-mix(in srgb, var(--line-color, #CD7C2F) 25%, transparent);
-  }
-  .dot.transfer {
-    width: 26px; height: 26px;
-    border-width: 4px;
-    background: white;
-    position: relative;
-  }
-  .dot.transfer::after {
-    content: '';
-    position: absolute;
-    inset: 3px;
-    border-radius: 50%;
-    background: var(--line-color, #CD7C2F);
-    opacity: 0.18;
-  }
-
+  .station.active { background: color-mix(in srgb, var(--line-color, #CD7C2F) 14%, transparent); }
+  .dot { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: white; border: 5px solid var(--line-color, #CD7C2F); box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 2; transition: transform 0.2s; position: relative; }
+  .station.active .dot { transform: scale(1.25); box-shadow: 0 0 0 6px color-mix(in srgb, var(--line-color, #CD7C2F) 25%, transparent); }
+  .dot.transfer { width: 26px; height: 26px; border-width: 4px; background: white; }
+  .dot.transfer::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--line-color, #CD7C2F); opacity: 0.18; }
+  .dot.terminal { background: var(--line-color, #CD7C2F); }
+  .train-icon { position: absolute; left: 22px; transform: translate(-50%, -50%); width: 38px; height: 24px; background: var(--line-color, #CD7C2F); border-radius: 8px; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; z-index: 5; transition: top 0.6s cubic-bezier(0.45, 0, 0.55, 1); pointer-events: none; opacity: 0; }
+  .train-icon.visible { opacity: 1; }
   .station-info { flex: 1; min-width: 0; }
-  .station-name-ko {
-    font-size: 18px; font-weight: 700;
-    color: #111827;
-    line-height: 1.2;
-  }
-  .station-name-en {
-    font-size: 12px; color: #6b7280;
-    margin-top: 2px;
-  }
-  .transfers {
-    display: flex; flex-wrap: wrap; gap: 4px;
-    margin-top: 6px;
-  }
-  .transfer-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 22px; height: 22px;
-    padding: 0 6px;
-    border-radius: 11px;
-    font-size: 11px; font-weight: 700; color: white;
-  }
-  .play-icon {
-    flex: 0 0 auto;
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--line-color, #CD7C2F);
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
+  .station-name-ko { font-size: 18px; font-weight: 700; color: #111827; line-height: 1.2; }
+  .station-name-en { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .transfers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .transfer-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 11px; font-weight: 700; color: white; }
+  .play-icon { flex: 0 0 auto; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; font-size: 18px; }
   .station.active .play-icon { opacity: 1; }
-
-  .loop-section {
-    border: 2px dashed color-mix(in srgb, var(--line-color, #CD7C2F) 40%, white);
-    border-radius: 16px;
-    padding: 6px 0 6px 0;
-    margin-bottom: 8px;
-    margin-left: -10px;
-    padding-left: 10px;
-    position: relative;
-  }
-  .loop-label {
-    position: absolute;
-    top: -10px; right: 16px;
-    background: white;
-    padding: 0 8px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--line-color, #CD7C2F);
-  }
-
-  /* Now playing footer */
-  .now-playing {
-    position: fixed;
-    left: 50%; transform: translateX(-50%);
-    bottom: 16px;
-    background: rgba(17, 24, 39, 0.95);
-    color: white;
-    padding: 12px 18px;
-    border-radius: 999px;
-    font-size: 13px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-    display: none;
-    align-items: center;
-    gap: 10px;
-    max-width: 90vw;
-    z-index: 20;
-  }
+  .loop-section { border: 2px dashed color-mix(in srgb, var(--line-color, #CD7C2F) 40%, white); border-radius: 16px; padding: 6px 0; margin-bottom: 8px; margin-left: -10px; padding-left: 10px; position: relative; }
+  .loop-label { position: absolute; top: -10px; right: 16px; background: white; padding: 0 8px; font-size: 11px; font-weight: 700; color: var(--line-color, #CD7C2F); }
+  .now-playing { position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: rgba(17, 24, 39, 0.95); color: white; padding: 12px 18px; border-radius: 999px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); display: none; align-items: center; gap: 10px; max-width: 92vw; z-index: 20; }
   .now-playing.active { display: flex; }
-  .pulse {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #34d399;
-    animation: pulse 1s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(1.4); }
-  }
-
-  .speed-control {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px;
-    color: #6b7280;
-  }
-  .speed-control select {
-    padding: 4px 6px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    background: white;
-    font-size: 12px;
-  }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: #34d399; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
+  .speed-control { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
+  .speed-control select { padding: 4px 6px; border-radius: 6px; border: 1px solid #d1d5db; background: white; font-size: 12px; }
+  .door-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 15; display: none; }
+  .door-overlay.show { display: block; }
+  .door-side { position: absolute; top: 0; bottom: 0; width: 60px; background: linear-gradient(90deg, rgba(17,24,39,0.85), rgba(17,24,39,0.5)); transition: transform 0.6s ease-out; }
+  .door-side.left { left: 0; transform: translateX(-100%); }
+  .door-side.right { right: 0; background: linear-gradient(270deg, rgba(17,24,39,0.85), rgba(17,24,39,0.5)); transform: translateX(100%); }
+  .door-overlay.show .door-side.active { transform: translateX(0); }
 </style>
 </head>
 <body>
-
 <header style="--line-color: #CD7C2F">
-  <div class="title">
-    <div class="line-badge" id="lineBadge">6</div>
-    <div>
-      <div class="title-text">지하철 놀이</div>
-      <div class="subtitle">역을 누르면 안내 방송이 나와요</div>
+  <div class="header-row">
+    <div class="title">
+      <div class="line-badge" id="lineBadge">6</div>
+      <div>
+        <div class="title-text">지하철 놀이</div>
+        <div class="subtitle" id="subtitle">역을 누르면 안내방송이 나와요</div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="speed-control"><span>속도</span>
+        <select id="speedSelect"><option value="0.85">느리게</option><option value="0.95" selected>보통</option><option value="1.1">빠르게</option></select>
+      </div>
+      <select class="line-select" id="lineSelect"></select>
+      <button class="icon-btn" id="autoToggleBtn">🚂 자동운행</button>
+      <button class="stop-btn" id="stopBtn">■ 정지</button>
     </div>
   </div>
-  <div class="controls">
-    <div class="speed-control">
-      <span>속도</span>
-      <select id="speedSelect">
-        <option value="0.85">느리게</option>
-        <option value="0.95" selected>보통</option>
-        <option value="1.1">빠르게</option>
-      </select>
-    </div>
-    <select class="line-select" id="lineSelect">
-      <option value="6">6호선</option>
-    </select>
-    <button class="stop-btn" id="stopBtn">■ 정지</button>
+  <div class="auto-panel" id="autoPanel">
+    <label>출발</label><select id="autoStart"></select>
+    <label>도착</label><select id="autoEnd"></select>
+    <button class="icon-btn primary" id="autoPlayBtn">▶ 출발</button>
+    <div class="hint">기차가 자동으로 역마다 멈추며 안내방송을 합니다. 정지 버튼으로 멈출 수 있어요.</div>
   </div>
 </header>
-
 <main>
-  <div class="helper">
-    💡 역을 탭하면 한국어 안내방송 후 영어 안내가 자동으로 재생돼요. 다시 탭하면 멈춥니다.<br>
-    🔁 6호선 위쪽은 <b>응암순환 구간</b>이에요. 다른 노선은 추후 추가 예정이에요!
-  </div>
-  <div class="map" id="map"></div>
+  <div class="helper">💡 <b>역 탭</b>: 한국어 → 영어 안내방송 자동 재생 (다시 탭하면 정지)<br>🚂 <b>자동운행</b>: 출발/도착역을 고르면 기차가 차임벨과 함께 한 역씩 운행해요<br>🔁 6호선 위쪽은 <b>응암순환 구간</b>이에요</div>
+  <div class="map" id="map"><div class="train-icon" id="trainIcon">🚇</div></div>
 </main>
-
-<div class="now-playing" id="nowPlaying">
-  <span class="pulse"></span>
-  <span id="nowPlayingText">방송 중...</span>
-</div>
-
+<div class="now-playing" id="nowPlaying"><span class="pulse"></span><span id="nowPlayingText">방송 중...</span></div>
+<div class="door-overlay" id="doorOverlay"><div class="door-side left" id="doorLeft"></div><div class="door-side right" id="doorRight"></div></div>
 <script>
-/* =========================================================================
- * 노선 데이터 — 확장 가능한 구조
- * ---------------------------------------------------------------------
- * 새 노선 추가 시: lineData 객체에 호선 키 추가만 하면 됨
- * 내리실 문 방향: doorDirection 필드 ('left' | 'right' | null)
- *   → null 이면 안내 방송에서 문 멘트는 생략됨
- *   → 추후 Apps Script 등에서 채워주면 자동 반영
- * 환승역: transfers 배열에 호선 코드 (string)
- *   → '1','2','3','4','5','6','7','8','9' 또는 '경의중앙','공항철도','경춘','우이신설','신분당','수인분당' 등
- * ========================================================================= */
-
-const TRANSFER_COLORS = {
-  '1': '#0052A4', '2': '#00A84D', '3': '#EF7C1C', '4': '#00A5DE',
-  '5': '#996CAC', '6': '#CD7C2F', '7': '#747F00', '8': '#E6186C', '9': '#BDB092',
-  '경의중앙': '#77C4A3', '공항철도': '#0090D2', '경춘': '#0C8E72',
-  '우이신설': '#B7C450', '신분당': '#D4003B', '수인분당': '#FABE00',
-  'GTX-A': '#9A6292'
-};
-
-const TRANSFER_NAMES = {
-  '1':'1호선','2':'2호선','3':'3호선','4':'4호선','5':'5호선',
-  '6':'6호선','7':'7호선','8':'8호선','9':'9호선',
-  '경의중앙':'경의중앙선','공항철도':'공항철도','경춘':'경춘선',
-  '우이신설':'우이신설선','신분당':'신분당선','수인분당':'수인분당선',
-  'GTX-A':'GTX-A'
-};
-
-const TRANSFER_NAMES_EN = {
-  '1':'Line 1','2':'Line 2','3':'Line 3','4':'Line 4','5':'Line 5',
-  '6':'Line 6','7':'Line 7','8':'Line 8','9':'Line 9',
-  '경의중앙':'the Gyeongui-Jungang Line','공항철도':'the Airport Railroad',
-  '경춘':'the Gyeongchun Line','우이신설':'the Ui-Sinseol Line',
-  '신분당':'the Shinbundang Line','수인분당':'the Suin-Bundang Line',
-  'GTX-A':'GTX-A'
-};
+const TRANSFER_COLORS = { '1':'#0052A4','2':'#00A84D','3':'#EF7C1C','4':'#00A5DE','5':'#996CAC','6':'#CD7C2F','7':'#747F00','8':'#E6186C','9':'#BDB092','경의중앙':'#77C4A3','공항철도':'#0090D2','경춘':'#0C8E72','우이신설':'#B7C450','신분당':'#D4003B','수인분당':'#FABE00','GTX-A':'#9A6292' };
+const TRANSFER_NAMES_KO = { '1':'1호선','2':'2호선','3':'3호선','4':'4호선','5':'5호선','6':'6호선','7':'7호선','8':'8호선','9':'9호선','경의중앙':'경의중앙선','공항철도':'공항철도','경춘':'경춘선','우이신설':'우이신설선','신분당':'신분당선','수인분당':'수인분당선','GTX-A':'GTX-A' };
+const TRANSFER_NAMES_EN = { '1':'Line 1','2':'Line 2','3':'Line 3','4':'Line 4','5':'Line 5','6':'Line 6','7':'Line 7','8':'Line 8','9':'Line 9','경의중앙':'the Gyeongui-Jungang Line','공항철도':'the Airport Railroad','경춘':'the Gyeongchun Line','우이신설':'the Ui-Sinseol Line','신분당':'the Shinbundang Line','수인분당':'the Suin-Bundang Line','GTX-A':'GTX-A' };
+const TRANSFER_BADGE = { '경의중앙':'경중','공항철도':'공항','경춘':'경춘','우이신설':'우이','신분당':'신분당','수인분당':'수분','GTX-A':'GTX' };
 
 const lineData = {
-  '6': {
-    name: '6호선',
-    nameEn: 'Line 6',
-    color: '#CD7C2F',
-    badge: '6',
-    /* 응암순환 → 새절 → ... → 봉화산 → 신내 (총 39역) */
-    stations: [
-      // 응암순환 루프 (응암 → 역촌 → 불광 → 독바위 → 연신내 → 구산 → 응암)
-      { name:'응암', nameEn:'Eungam', transfers:[], doorDirection:null, loopStart:true },
-      { name:'역촌', nameEn:'Yeokchon', transfers:[], doorDirection:null, inLoop:true },
-      { name:'불광', nameEn:'Bulgwang', transfers:['3'], doorDirection:null, inLoop:true },
-      { name:'독바위', nameEn:'Dokbawi', transfers:[], doorDirection:null, inLoop:true },
-      { name:'연신내', nameEn:'Yeonsinnae', transfers:['3'], doorDirection:null, inLoop:true },
-      { name:'구산', nameEn:'Gusan', transfers:[], doorDirection:null, loopEnd:true },
-      // 본선
-      { name:'새절', nameEn:'Saejeol', transfers:[], doorDirection:null },
-      { name:'증산', nameEn:'Jeungsan', transfers:[], doorDirection:null },
-      { name:'디지털미디어시티', nameEn:'Digital Media City', transfers:['경의중앙','공항철도'], doorDirection:null },
-      { name:'월드컵경기장', nameEn:'World Cup Stadium', transfers:[], doorDirection:null },
-      { name:'마포구청', nameEn:'Mapo-gu Office', transfers:[], doorDirection:null },
-      { name:'망원', nameEn:'Mangwon', transfers:[], doorDirection:null },
-      { name:'합정', nameEn:'Hapjeong', transfers:['2'], doorDirection:null },
-      { name:'상수', nameEn:'Sangsu', transfers:[], doorDirection:null },
-      { name:'광흥창', nameEn:'Gwangheungchang', transfers:[], doorDirection:null },
-      { name:'대흥', nameEn:'Daeheung', transfers:[], doorDirection:null },
-      { name:'공덕', nameEn:'Gongdeok', transfers:['5','경의중앙','공항철도'], doorDirection:null },
-      { name:'효창공원앞', nameEn:'Hyochang Park', transfers:['경의중앙'], doorDirection:null },
-      { name:'삼각지', nameEn:'Samgakji', transfers:['4'], doorDirection:null },
-      { name:'녹사평', nameEn:'Noksapyeong', transfers:[], doorDirection:null },
-      { name:'이태원', nameEn:'Itaewon', transfers:[], doorDirection:null },
-      { name:'한강진', nameEn:'Hangangjin', transfers:[], doorDirection:null },
-      { name:'버티고개', nameEn:'Beotigogae', transfers:[], doorDirection:null },
-      { name:'약수', nameEn:'Yaksu', transfers:['3'], doorDirection:null },
-      { name:'청구', nameEn:'Cheonggu', transfers:['5'], doorDirection:null },
-      { name:'신당', nameEn:'Sindang', transfers:['2'], doorDirection:null },
-      { name:'동묘앞', nameEn:'Dongmyo', transfers:['1'], doorDirection:null },
-      { name:'창신', nameEn:'Changsin', transfers:[], doorDirection:null },
-      { name:'보문', nameEn:'Bomun', transfers:['우이신설'], doorDirection:null },
-      { name:'안암', nameEn:'Anam', transfers:[], doorDirection:null },
-      { name:'고려대', nameEn:'Korea University', transfers:[], doorDirection:null },
-      { name:'월곡', nameEn:'Wolgok', transfers:[], doorDirection:null },
-      { name:'상월곡', nameEn:'Sangwolgok', transfers:[], doorDirection:null },
-      { name:'돌곶이', nameEn:'Dolgoji', transfers:[], doorDirection:null },
-      { name:'석계', nameEn:'Seokgye', transfers:['1'], doorDirection:null },
-      { name:'태릉입구', nameEn:'Taereung', transfers:['7'], doorDirection:null },
-      { name:'화랑대', nameEn:'Hwarangdae(Seoul Women\'s Univ.)', transfers:[], doorDirection:null },
-      { name:'봉화산', nameEn:'Bonghwasan(Seoul Medical Center)', transfers:[], doorDirection:null },
-      { name:'신내', nameEn:'Sinnae', transfers:['경춘'], doorDirection:null }
-    ]
-  }
-  /* TODO: 다른 호선 추가
-  '1': { name:'1호선', nameEn:'Line 1', color:'#0052A4', badge:'1', stations:[...] },
-  '2': { ... },
-  ...
-  */
+'6': { name:'6호선', nameEn:'Line 6', color:'#CD7C2F', badge:'6', stations:[
+{ name:'응암', nameEn:'Eungam', transfers:[], doorDirection:null, loopStart:true },
+{ name:'역촌', nameEn:'Yeokchon', transfers:[], doorDirection:null, inLoop:true },
+{ name:'불광', nameEn:'Bulgwang', transfers:['3'], doorDirection:null, inLoop:true },
+{ name:'독바위', nameEn:'Dokbawi', transfers:[], doorDirection:null, inLoop:true },
+{ name:'연신내', nameEn:'Yeonsinnae', transfers:['3'], doorDirection:null, inLoop:true },
+{ name:'구산', nameEn:'Gusan', transfers:[], doorDirection:null, loopEnd:true },
+{ name:'새절', nameEn:'Saejeol', transfers:[], doorDirection:null },
+{ name:'증산', nameEn:'Jeungsan', transfers:[], doorDirection:null },
+{ name:'디지털미디어시티', nameEn:'Digital Media City', transfers:['경의중앙','공항철도'], doorDirection:null },
+{ name:'월드컵경기장', nameEn:'World Cup Stadium', transfers:[], doorDirection:null },
+{ name:'마포구청', nameEn:'Mapo-gu Office', transfers:[], doorDirection:null },
+{ name:'망원', nameEn:'Mangwon', transfers:[], doorDirection:null },
+{ name:'합정', nameEn:'Hapjeong', transfers:['2'], doorDirection:null },
+{ name:'상수', nameEn:'Sangsu', transfers:[], doorDirection:null },
+{ name:'광흥창', nameEn:'Gwangheungchang', transfers:[], doorDirection:null },
+{ name:'대흥', nameEn:'Daeheung', transfers:[], doorDirection:null },
+{ name:'공덕', nameEn:'Gongdeok', transfers:['5','경의중앙','공항철도'], doorDirection:null },
+{ name:'효창공원앞', nameEn:'Hyochang Park', transfers:['경의중앙'], doorDirection:null },
+{ name:'삼각지', nameEn:'Samgakji', transfers:['4'], doorDirection:null },
+{ name:'녹사평', nameEn:'Noksapyeong', transfers:[], doorDirection:null },
+{ name:'이태원', nameEn:'Itaewon', transfers:[], doorDirection:null },
+{ name:'한강진', nameEn:'Hangangjin', transfers:[], doorDirection:null },
+{ name:'버티고개', nameEn:'Beotigogae', transfers:[], doorDirection:null },
+{ name:'약수', nameEn:'Yaksu', transfers:['3'], doorDirection:null },
+{ name:'청구', nameEn:'Cheonggu', transfers:['5'], doorDirection:null },
+{ name:'신당', nameEn:'Sindang', transfers:['2'], doorDirection:null },
+{ name:'동묘앞', nameEn:'Dongmyo', transfers:['1'], doorDirection:null },
+{ name:'창신', nameEn:'Changsin', transfers:[], doorDirection:null },
+{ name:'보문', nameEn:'Bomun', transfers:['우이신설'], doorDirection:null },
+{ name:'안암', nameEn:'Anam', transfers:[], doorDirection:null },
+{ name:'고려대', nameEn:'Korea University', transfers:[], doorDirection:null },
+{ name:'월곡', nameEn:'Wolgok', transfers:[], doorDirection:null },
+{ name:'상월곡', nameEn:'Sangwolgok', transfers:[], doorDirection:null },
+{ name:'돌곶이', nameEn:'Dolgoji', transfers:[], doorDirection:null },
+{ name:'석계', nameEn:'Seokgye', transfers:['1'], doorDirection:null },
+{ name:'태릉입구', nameEn:'Taereung', transfers:['7'], doorDirection:null },
+{ name:'화랑대', nameEn:'Hwarangdae', transfers:[], doorDirection:null },
+{ name:'봉화산', nameEn:'Bonghwasan', transfers:[], doorDirection:null },
+{ name:'신내', nameEn:'Sinnae', transfers:['경춘'], doorDirection:null }
+]},
+'2': { name:'2호선', nameEn:'Line 2', color:'#00A84D', badge:'2', stations:[
+{ name:'시청', nameEn:'City Hall', transfers:['1'], doorDirection:null },
+{ name:'을지로입구', nameEn:'Euljiro 1-ga', transfers:[], doorDirection:null },
+{ name:'을지로3가', nameEn:'Euljiro 3-ga', transfers:['3'], doorDirection:null },
+{ name:'을지로4가', nameEn:'Euljiro 4-ga', transfers:['5'], doorDirection:null },
+{ name:'동대문역사문화공원', nameEn:'Dongdaemun History Culture Park', transfers:['4','5'], doorDirection:null },
+{ name:'신당', nameEn:'Sindang', transfers:['6'], doorDirection:null },
+{ name:'상왕십리', nameEn:'Sangwangsimni', transfers:[], doorDirection:null },
+{ name:'왕십리', nameEn:'Wangsimni', transfers:['5','경의중앙','수인분당'], doorDirection:null },
+{ name:'한양대', nameEn:'Hanyang University', transfers:[], doorDirection:null },
+{ name:'뚝섬', nameEn:'Ttukseom', transfers:[], doorDirection:null },
+{ name:'성수', nameEn:'Seongsu', transfers:[], doorDirection:null },
+{ name:'건대입구', nameEn:'Konkuk University', transfers:['7'], doorDirection:null },
+{ name:'구의', nameEn:'Guui', transfers:[], doorDirection:null },
+{ name:'강변', nameEn:'Gangbyeon', transfers:[], doorDirection:null },
+{ name:'잠실나루', nameEn:'Jamsillaru', transfers:[], doorDirection:null },
+{ name:'잠실', nameEn:'Jamsil', transfers:['8'], doorDirection:null },
+{ name:'잠실새내', nameEn:'Jamsilsaenae', transfers:[], doorDirection:null },
+{ name:'종합운동장', nameEn:'Sports Complex', transfers:[], doorDirection:null },
+{ name:'삼성', nameEn:'Samseong', transfers:[], doorDirection:null },
+{ name:'선릉', nameEn:'Seolleung', transfers:['수인분당'], doorDirection:null },
+{ name:'역삼', nameEn:'Yeoksam', transfers:[], doorDirection:null },
+{ name:'강남', nameEn:'Gangnam', transfers:['신분당'], doorDirection:null },
+{ name:'교대', nameEn:'Seoul National University of Education', transfers:['3'], doorDirection:null },
+{ name:'서초', nameEn:'Seocho', transfers:[], doorDirection:null },
+{ name:'방배', nameEn:'Bangbae', transfers:[], doorDirection:null },
+{ name:'사당', nameEn:'Sadang', transfers:['4'], doorDirection:null },
+{ name:'낙성대', nameEn:'Nakseongdae', transfers:[], doorDirection:null },
+{ name:'서울대입구', nameEn:'Seoul National University', transfers:[], doorDirection:null },
+{ name:'봉천', nameEn:'Bongcheon', transfers:[], doorDirection:null },
+{ name:'신림', nameEn:'Sillim', transfers:['신분당'], doorDirection:null },
+{ name:'신대방', nameEn:'Sindaebang', transfers:[], doorDirection:null },
+{ name:'구로디지털단지', nameEn:'Guro Digital Complex', transfers:[], doorDirection:null },
+{ name:'대림', nameEn:'Daerim', transfers:['7'], doorDirection:null },
+{ name:'신도림', nameEn:'Sindorim', transfers:['1'], doorDirection:null },
+{ name:'문래', nameEn:'Mullae', transfers:[], doorDirection:null },
+{ name:'영등포구청', nameEn:'Yeongdeungpo-gu Office', transfers:['5'], doorDirection:null },
+{ name:'당산', nameEn:'Dangsan', transfers:['9'], doorDirection:null },
+{ name:'합정', nameEn:'Hapjeong', transfers:['6'], doorDirection:null },
+{ name:'홍대입구', nameEn:'Hongik University', transfers:['경의중앙','공항철도'], doorDirection:null },
+{ name:'신촌', nameEn:'Sinchon', transfers:[], doorDirection:null },
+{ name:'이대', nameEn:'Ewha Womans University', transfers:[], doorDirection:null },
+{ name:'아현', nameEn:'Ahyeon', transfers:[], doorDirection:null },
+{ name:'충정로', nameEn:'Chungjeongno', transfers:['5'], doorDirection:null }
+]},
+'3': { name:'3호선', nameEn:'Line 3', color:'#EF7C1C', badge:'3', stations:[
+{ name:'대화', nameEn:'Daehwa', transfers:[], doorDirection:null },
+{ name:'주엽', nameEn:'Juyeop', transfers:[], doorDirection:null },
+{ name:'정발산', nameEn:'Jeongbalsan', transfers:[], doorDirection:null },
+{ name:'마두', nameEn:'Madu', transfers:[], doorDirection:null },
+{ name:'백석', nameEn:'Baekseok', transfers:[], doorDirection:null },
+{ name:'대곡', nameEn:'Daegok', transfers:['경의중앙','GTX-A'], doorDirection:null },
+{ name:'화정', nameEn:'Hwajeong', transfers:[], doorDirection:null },
+{ name:'원당', nameEn:'Wondang', transfers:[], doorDirection:null },
+{ name:'원흥', nameEn:'Wonheung', transfers:[], doorDirection:null },
+{ name:'삼송', nameEn:'Samsong', transfers:[], doorDirection:null },
+{ name:'지축', nameEn:'Jichuk', transfers:[], doorDirection:null },
+{ name:'구파발', nameEn:'Gupabal', transfers:[], doorDirection:null },
+{ name:'연신내', nameEn:'Yeonsinnae', transfers:['6'], doorDirection:null },
+{ name:'불광', nameEn:'Bulgwang', transfers:['6'], doorDirection:null },
+{ name:'녹번', nameEn:'Nokbeon', transfers:[], doorDirection:null },
+{ name:'홍제', nameEn:'Hongje', transfers:[], doorDirection:null },
+{ name:'무악재', nameEn:'Muakjae', transfers:[], doorDirection:null },
+{ name:'독립문', nameEn:'Dongnimmun', transfers:[], doorDirection:null },
+{ name:'경복궁', nameEn:'Gyeongbokgung', transfers:[], doorDirection:null },
+{ name:'안국', nameEn:'Anguk', transfers:[], doorDirection:null },
+{ name:'종로3가', nameEn:'Jongno 3-ga', transfers:['1','5'], doorDirection:null },
+{ name:'을지로3가', nameEn:'Euljiro 3-ga', transfers:['2'], doorDirection:null },
+{ name:'충무로', nameEn:'Chungmuro', transfers:['4'], doorDirection:null },
+{ name:'동대입구', nameEn:'Dongguk University', transfers:[], doorDirection:null },
+{ name:'약수', nameEn:'Yaksu', transfers:['6'], doorDirection:null },
+{ name:'금호', nameEn:'Geumho', transfers:[], doorDirection:null },
+{ name:'옥수', nameEn:'Oksu', transfers:['경의중앙'], doorDirection:null },
+{ name:'압구정', nameEn:'Apgujeong', transfers:[], doorDirection:null },
+{ name:'신사', nameEn:'Sinsa', transfers:['신분당'], doorDirection:null },
+{ name:'잠원', nameEn:'Jamwon', transfers:[], doorDirection:null },
+{ name:'고속터미널', nameEn:'Express Bus Terminal', transfers:['7','9'], doorDirection:null },
+{ name:'교대', nameEn:'Seoul National University of Education', transfers:['2'], doorDirection:null },
+{ name:'남부터미널', nameEn:'Nambu Bus Terminal', transfers:[], doorDirection:null },
+{ name:'양재', nameEn:'Yangjae', transfers:['신분당'], doorDirection:null },
+{ name:'매봉', nameEn:'Maebong', transfers:[], doorDirection:null },
+{ name:'도곡', nameEn:'Dogok', transfers:['수인분당'], doorDirection:null },
+{ name:'대치', nameEn:'Daechi', transfers:[], doorDirection:null },
+{ name:'학여울', nameEn:'Hangnyeoul', transfers:[], doorDirection:null },
+{ name:'대청', nameEn:'Daecheong', transfers:[], doorDirection:null },
+{ name:'일원', nameEn:'Irwon', transfers:[], doorDirection:null },
+{ name:'수서', nameEn:'Suseo', transfers:['수인분당'], doorDirection:null },
+{ name:'가락시장', nameEn:'Garak Market', transfers:['8'], doorDirection:null },
+{ name:'경찰병원', nameEn:'Police Hospital', transfers:[], doorDirection:null },
+{ name:'오금', nameEn:'Ogeum', transfers:['5'], doorDirection:null }
+]},
+'5': { name:'5호선', nameEn:'Line 5', color:'#996CAC', badge:'5', stations:[
+{ name:'방화', nameEn:'Banghwa', transfers:[], doorDirection:null },
+{ name:'개화산', nameEn:'Gaehwasan', transfers:[], doorDirection:null },
+{ name:'김포공항', nameEn:'Gimpo International Airport', transfers:['9','공항철도'], doorDirection:null },
+{ name:'송정', nameEn:'Songjeong', transfers:[], doorDirection:null },
+{ name:'마곡', nameEn:'Magok', transfers:[], doorDirection:null },
+{ name:'발산', nameEn:'Balsan', transfers:[], doorDirection:null },
+{ name:'우장산', nameEn:'Ujangsan', transfers:[], doorDirection:null },
+{ name:'화곡', nameEn:'Hwagok', transfers:[], doorDirection:null },
+{ name:'까치산', nameEn:'Kkachisan', transfers:['2'], doorDirection:null },
+{ name:'신정', nameEn:'Sinjeong', transfers:[], doorDirection:null },
+{ name:'목동', nameEn:'Mok-dong', transfers:[], doorDirection:null },
+{ name:'오목교', nameEn:'Omokgyo', transfers:[], doorDirection:null },
+{ name:'양평', nameEn:'Yangpyeong', transfers:[], doorDirection:null },
+{ name:'영등포구청', nameEn:'Yeongdeungpo-gu Office', transfers:['2'], doorDirection:null },
+{ name:'영등포시장', nameEn:'Yeongdeungpo Market', transfers:[], doorDirection:null },
+{ name:'신길', nameEn:'Singil', transfers:['1'], doorDirection:null },
+{ name:'여의도', nameEn:'Yeouido', transfers:['9'], doorDirection:null },
+{ name:'여의나루', nameEn:'Yeouinaru', transfers:[], doorDirection:null },
+{ name:'마포', nameEn:'Mapo', transfers:[], doorDirection:null },
+{ name:'공덕', nameEn:'Gongdeok', transfers:['6','경의중앙','공항철도'], doorDirection:null },
+{ name:'애오개', nameEn:'Aeogae', transfers:[], doorDirection:null },
+{ name:'충정로', nameEn:'Chungjeongno', transfers:['2'], doorDirection:null },
+{ name:'서대문', nameEn:'Seodaemun', transfers:[], doorDirection:null },
+{ name:'광화문', nameEn:'Gwanghwamun', transfers:[], doorDirection:null },
+{ name:'종로3가', nameEn:'Jongno 3-ga', transfers:['1','3'], doorDirection:null },
+{ name:'을지로4가', nameEn:'Euljiro 4-ga', transfers:['2'], doorDirection:null },
+{ name:'동대문역사문화공원', nameEn:'Dongdaemun History Culture Park', transfers:['2','4'], doorDirection:null },
+{ name:'청구', nameEn:'Cheonggu', transfers:['6'], doorDirection:null },
+{ name:'신금호', nameEn:'Singeumho', transfers:[], doorDirection:null },
+{ name:'행당', nameEn:'Haengdang', transfers:[], doorDirection:null },
+{ name:'왕십리', nameEn:'Wangsimni', transfers:['2','경의중앙','수인분당'], doorDirection:null },
+{ name:'마장', nameEn:'Majang', transfers:[], doorDirection:null },
+{ name:'답십리', nameEn:'Dapsimni', transfers:[], doorDirection:null },
+{ name:'장한평', nameEn:'Janghanpyeong', transfers:[], doorDirection:null },
+{ name:'군자', nameEn:'Gunja', transfers:['7'], doorDirection:null },
+{ name:'아차산', nameEn:'Achasan', transfers:[], doorDirection:null },
+{ name:'광나루', nameEn:'Gwangnaru', transfers:[], doorDirection:null },
+{ name:'천호', nameEn:'Cheonho', transfers:['8'], doorDirection:null },
+{ name:'강동', nameEn:'Gangdong', transfers:[], doorDirection:null },
+{ name:'길동', nameEn:'Gil-dong', transfers:[], doorDirection:null },
+{ name:'굽은다리', nameEn:'Gubeundari', transfers:[], doorDirection:null },
+{ name:'명일', nameEn:'Myeongil', transfers:[], doorDirection:null },
+{ name:'고덕', nameEn:'Godeok', transfers:[], doorDirection:null },
+{ name:'상일동', nameEn:'Sangil-dong', transfers:[], doorDirection:null },
+{ name:'강일', nameEn:'Gangil', transfers:[], doorDirection:null },
+{ name:'미사', nameEn:'Misa', transfers:[], doorDirection:null },
+{ name:'하남풍산', nameEn:'Hanam Pungsan', transfers:[], doorDirection:null },
+{ name:'하남시청', nameEn:'Hanam City Hall', transfers:[], doorDirection:null },
+{ name:'하남검단산', nameEn:'Hanam Geomdansan', transfers:[], doorDirection:null }
+]},
+'경의중앙': { name:'경의중앙선', nameEn:'Gyeongui-Jungang Line', color:'#77C4A3', badge:'경중', stations:[
+{ name:'문산', nameEn:'Munsan', transfers:[], doorDirection:null },
+{ name:'파주', nameEn:'Paju', transfers:[], doorDirection:null },
+{ name:'월롱', nameEn:'Wollong', transfers:[], doorDirection:null },
+{ name:'금촌', nameEn:'Geumchon', transfers:[], doorDirection:null },
+{ name:'금릉', nameEn:'Geumneung', transfers:[], doorDirection:null },
+{ name:'운정', nameEn:'Unjeong', transfers:[], doorDirection:null },
+{ name:'야당', nameEn:'Yadang', transfers:[], doorDirection:null },
+{ name:'탄현', nameEn:'Tanhyeon', transfers:[], doorDirection:null },
+{ name:'일산', nameEn:'Ilsan', transfers:[], doorDirection:null },
+{ name:'풍산', nameEn:'Pungsan', transfers:[], doorDirection:null },
+{ name:'백마', nameEn:'Baengma', transfers:[], doorDirection:null },
+{ name:'곡산', nameEn:'Goksan', transfers:[], doorDirection:null },
+{ name:'대곡', nameEn:'Daegok', transfers:['3','GTX-A'], doorDirection:null },
+{ name:'능곡', nameEn:'Neunggok', transfers:[], doorDirection:null },
+{ name:'행신', nameEn:'Haengsin', transfers:[], doorDirection:null },
+{ name:'강매', nameEn:'Gangmae', transfers:[], doorDirection:null },
+{ name:'화전', nameEn:'Hwajeon', transfers:[], doorDirection:null },
+{ name:'수색', nameEn:'Susaek', transfers:[], doorDirection:null },
+{ name:'디지털미디어시티', nameEn:'Digital Media City', transfers:['6','공항철도'], doorDirection:null },
+{ name:'가좌', nameEn:'Gajwa', transfers:[], doorDirection:null },
+{ name:'홍대입구', nameEn:'Hongik University', transfers:['2','공항철도'], doorDirection:null },
+{ name:'서강대', nameEn:'Sogang University', transfers:[], doorDirection:null },
+{ name:'공덕', nameEn:'Gongdeok', transfers:['5','6','공항철도'], doorDirection:null },
+{ name:'효창공원앞', nameEn:'Hyochang Park', transfers:['6'], doorDirection:null },
+{ name:'용산', nameEn:'Yongsan', transfers:['1'], doorDirection:null },
+{ name:'이촌', nameEn:'Ichon', transfers:['4'], doorDirection:null },
+{ name:'서빙고', nameEn:'Seobinggo', transfers:[], doorDirection:null },
+{ name:'한남', nameEn:'Hannam', transfers:[], doorDirection:null },
+{ name:'옥수', nameEn:'Oksu', transfers:['3'], doorDirection:null },
+{ name:'응봉', nameEn:'Eungbong', transfers:[], doorDirection:null },
+{ name:'왕십리', nameEn:'Wangsimni', transfers:['2','5','수인분당'], doorDirection:null },
+{ name:'청량리', nameEn:'Cheongnyangni', transfers:['1'], doorDirection:null },
+{ name:'회기', nameEn:'Hoegi', transfers:['1'], doorDirection:null },
+{ name:'중랑', nameEn:'Jungnang', transfers:[], doorDirection:null },
+{ name:'상봉', nameEn:'Sangbong', transfers:['7','경춘'], doorDirection:null },
+{ name:'망우', nameEn:'Mangu', transfers:['경춘'], doorDirection:null },
+{ name:'양원', nameEn:'Yangwon', transfers:[], doorDirection:null },
+{ name:'구리', nameEn:'Guri', transfers:[], doorDirection:null },
+{ name:'도농', nameEn:'Donong', transfers:[], doorDirection:null },
+{ name:'양정', nameEn:'Yangjeong', transfers:[], doorDirection:null },
+{ name:'덕소', nameEn:'Deokso', transfers:[], doorDirection:null },
+{ name:'도심', nameEn:'Dosim', transfers:[], doorDirection:null },
+{ name:'팔당', nameEn:'Paldang', transfers:[], doorDirection:null },
+{ name:'운길산', nameEn:'Ungilsan', transfers:[], doorDirection:null },
+{ name:'양수', nameEn:'Yangsu', transfers:[], doorDirection:null },
+{ name:'신원', nameEn:'Sinwon', transfers:[], doorDirection:null },
+{ name:'국수', nameEn:'Guksu', transfers:[], doorDirection:null },
+{ name:'아신', nameEn:'Asin', transfers:[], doorDirection:null },
+{ name:'오빈', nameEn:'Obin', transfers:[], doorDirection:null },
+{ name:'양평', nameEn:'Yangpyeong', transfers:[], doorDirection:null },
+{ name:'원덕', nameEn:'Wondeok', transfers:[], doorDirection:null },
+{ name:'용문', nameEn:'Yongmun', transfers:[], doorDirection:null }
+]}
 };
 
-/* ===== 상태 ===== */
-let currentLine = '6';
-let currentStationIdx = -1;
-let isPlaying = false;
-let speechRate = 0.95;
-let koreanVoice = null;
-let englishVoice = null;
+let currentLine = '6', currentStationIdx = -1, isPlaying = false, speechRate = 0.95;
+let koreanVoice = null, englishVoice = null, autoMode = false, autoCancel = false, audioCtx = null;
 
-/* ===== 음성 초기화 ===== */
 function loadVoices() {
   const voices = speechSynthesis.getVoices();
-  // 한국어 여성 보이스 선호
-  koreanVoice = voices.find(v => v.lang === 'ko-KR' && /female|여성|Yuna|Heami/i.test(v.name))
-             || voices.find(v => v.lang === 'ko-KR')
-             || voices.find(v => v.lang.startsWith('ko'));
-  englishVoice = voices.find(v => v.lang === 'en-US' && /female|samantha|Karen/i.test(v.name))
-              || voices.find(v => v.lang === 'en-US')
-              || voices.find(v => v.lang.startsWith('en'));
+  koreanVoice = voices.find(v => v.lang === 'ko-KR' && /female|여성|Yuna|Heami/i.test(v.name)) || voices.find(v => v.lang === 'ko-KR') || voices.find(v => v.lang.startsWith('ko'));
+  englishVoice = voices.find(v => v.lang === 'en-US' && /female|samantha|Karen/i.test(v.name)) || voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
 }
 loadVoices();
-if (typeof speechSynthesis !== 'undefined') {
-  speechSynthesis.onvoiceschanged = loadVoices;
-}
+if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
 
-/* ===== 안내 방송 텍스트 생성 ===== */
-function buildKoreanAnnouncement(station, lineKey) {
-  let parts = [];
+function buildAnnouncementChunks(station) {
+  const chunks = [];
+  chunks.push({ text:'이번 역은,', lang:'ko-KR', voice:koreanVoice, pauseAfter:200 });
   if (station.transfers && station.transfers.length > 0) {
-    const transferText = station.transfers
-      .map(t => TRANSFER_NAMES[t] || (t + '호선'))
-      .join(', ');
-    parts.push(`이번 역은 ${transferText} 열차로 갈아타실 수 있는 ${station.name}, ${station.name} 역입니다.`);
-  } else {
-    parts.push(`이번 역은 ${station.name}, ${station.name} 역입니다.`);
+    const tt = station.transfers.map(t => TRANSFER_NAMES_KO[t] || (t+'호선')).join(', ');
+    chunks.push({ text:tt+' 열차로 갈아타실 수 있는,', lang:'ko-KR', voice:koreanVoice, pauseAfter:200 });
   }
-  if (station.doorDirection === 'left') {
-    parts.push('내리실 문은 왼쪽입니다.');
-  } else if (station.doorDirection === 'right') {
-    parts.push('내리실 문은 오른쪽입니다.');
-  }
-  return parts.join(' ');
-}
-
-function buildEnglishAnnouncement(station) {
-  let parts = [`This stop is ${station.nameEn}, ${station.nameEn}.`];
+  chunks.push({ text:station.name+',', lang:'ko-KR', voice:koreanVoice, pauseAfter:150 });
+  chunks.push({ text:station.name+' 역입니다.', lang:'ko-KR', voice:koreanVoice, pauseAfter:350 });
+  if (station.doorDirection === 'left') chunks.push({ text:'내리실 문은 왼쪽입니다.', lang:'ko-KR', voice:koreanVoice, pauseAfter:400 });
+  else if (station.doorDirection === 'right') chunks.push({ text:'내리실 문은 오른쪽입니다.', lang:'ko-KR', voice:koreanVoice, pauseAfter:400 });
+  chunks.push({ text:'This stop is,', lang:'en-US', voice:englishVoice, pauseAfter:180 });
+  chunks.push({ text:station.name, lang:'ko-KR', voice:koreanVoice, pauseAfter:150 });
+  chunks.push({ text:station.name, lang:'ko-KR', voice:koreanVoice, pauseAfter:280 });
   if (station.transfers && station.transfers.length > 0) {
-    const transferText = station.transfers
-      .map(t => TRANSFER_NAMES_EN[t] || t)
-      .join(', ');
-    parts.push(`You can transfer to ${transferText}.`);
+    const tt = station.transfers.map(t => TRANSFER_NAMES_EN[t] || t).join(', ');
+    chunks.push({ text:'You can transfer to '+tt+'.', lang:'en-US', voice:englishVoice, pauseAfter:250 });
   }
-  if (station.doorDirection === 'left') {
-    parts.push('The doors are on your left.');
-  } else if (station.doorDirection === 'right') {
-    parts.push('The doors are on your right.');
-  }
-  return parts.join(' ');
+  if (station.doorDirection === 'left') chunks.push({ text:'The doors are on your left.', lang:'en-US', voice:englishVoice, pauseAfter:200 });
+  else if (station.doorDirection === 'right') chunks.push({ text:'The doors are on your right.', lang:'en-US', voice:englishVoice, pauseAfter:200 });
+  return chunks;
 }
 
-/* ===== 재생 ===== */
-function speak(text, lang, voice, onEnd) {
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
-  u.rate = speechRate;
-  u.pitch = 1.0;
-  if (voice) u.voice = voice;
-  u.onend = onEnd;
-  u.onerror = onEnd;
-  speechSynthesis.speak(u);
-  return u;
+function buildNextStopChunks(s) {
+  return [
+    { text:'다음 역은,', lang:'ko-KR', voice:koreanVoice, pauseAfter:200 },
+    { text:s.name+',', lang:'ko-KR', voice:koreanVoice, pauseAfter:150 },
+    { text:s.name+' 역입니다.', lang:'ko-KR', voice:koreanVoice, pauseAfter:250 }
+  ];
 }
 
-function announce(idx) {
+function ensureAudio() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e) { return null; } }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playChime(type) {
+  const ctx = ensureAudio(); if (!ctx) return Promise.resolve();
+  const notes = type === 'arrival' ? [{f:783.99,t:0,dur:0.4},{f:1046.5,t:0.25,dur:0.6}] : [{f:1046.5,t:0,dur:0.35},{f:783.99,t:0.22,dur:0.55}];
+  notes.forEach(n => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.frequency.value = n.f; osc.type = 'sine';
+    osc.connect(gain); gain.connect(ctx.destination);
+    const start = ctx.currentTime + n.t;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(0.25, start+0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, start+n.dur);
+    osc.start(start); osc.stop(start+n.dur+0.05);
+  });
+  return new Promise(res => setTimeout(res, 900));
+}
+
+function speakChunk(chunk) {
+  return new Promise(resolve => {
+    if (!chunk.text) { resolve(); return; }
+    const u = new SpeechSynthesisUtterance(chunk.text);
+    u.lang = chunk.lang; u.rate = speechRate; u.pitch = 1.0;
+    if (chunk.voice) u.voice = chunk.voice;
+    let resolved = false;
+    const done = () => { if (resolved) return; resolved = true; setTimeout(resolve, chunk.pauseAfter || 150); };
+    u.onend = done; u.onerror = done;
+    speechSynthesis.speak(u);
+  });
+}
+async function speakChain(chunks) {
+  for (const chunk of chunks) {
+    if (!isPlaying && !autoMode) return;
+    if (autoCancel) return;
+    await speakChunk(chunk);
+  }
+}
+
+async function announce(idx) {
   const line = lineData[currentLine];
   const station = line.stations[idx];
   if (!station) return;
-
-  // 이미 같은 역 재생 중이면 정지
-  if (isPlaying && currentStationIdx === idx) {
-    stopAnnounce();
-    return;
-  }
-
+  if (isPlaying && currentStationIdx === idx && !autoMode) { stopAnnounce(); return; }
   stopAnnounce();
-  currentStationIdx = idx;
-  isPlaying = true;
+  ensureAudio();
+  currentStationIdx = idx; isPlaying = true; autoCancel = false;
   updateUI();
+  setNowPlaying('🔊 ' + station.name + ' (' + station.nameEn + ')');
+  moveTrainTo(idx);
+  await playChime('arrival');
+  if (autoCancel) return;
+  showDoor(station.doorDirection);
+  await speakChain(buildAnnouncementChunks(station));
+  hideDoor();
+  if (!autoMode) { isPlaying = false; currentStationIdx = -1; updateUI(); }
+}
 
-  const koText = buildKoreanAnnouncement(station, currentLine);
-  const enText = buildEnglishAnnouncement(station);
-
-  setNowPlaying(`🔊 ${station.name} (${station.nameEn})`);
-
-  speak(koText, 'ko-KR', koreanVoice, () => {
-    if (!isPlaying) return;
-    setTimeout(() => {
-      if (!isPlaying) return;
-      speak(enText, 'en-US', englishVoice, () => {
-        isPlaying = false;
-        currentStationIdx = -1;
-        updateUI();
-      });
-    }, 250);
-  });
+async function startAutoRun() {
+  const line = lineData[currentLine];
+  const startIdx = parseInt(document.getElementById('autoStart').value);
+  const endIdx = parseInt(document.getElementById('autoEnd').value);
+  if (isNaN(startIdx) || isNaN(endIdx) || startIdx === endIdx) { alert('출발역과 도착역을 다르게 골라주세요!'); return; }
+  stopAnnounce();
+  await new Promise(r => setTimeout(r, 100));
+  autoMode = true; autoCancel = false; isPlaying = true;
+  updateUI();
+  const step = startIdx < endIdx ? 1 : -1;
+  let idx = startIdx;
+  while (idx !== endIdx + step) {
+    if (autoCancel) break;
+    currentStationIdx = idx; updateUI(); moveTrainTo(idx);
+    setNowPlaying('🚂 ' + line.stations[idx].name + ' 도착');
+    await playChime('arrival');
+    if (autoCancel) break;
+    showDoor(line.stations[idx].doorDirection);
+    await speakChain(buildAnnouncementChunks(line.stations[idx]));
+    hideDoor();
+    if (autoCancel) break;
+    if (idx !== endIdx) {
+      setNowPlaying('🚉 ' + line.stations[idx].name + ' 출발');
+      await new Promise(r => setTimeout(r, 1000));
+      if (autoCancel) break;
+      await playChime('departure');
+      if (autoCancel) break;
+      const nextStation = line.stations[idx + step];
+      await speakChain(buildNextStopChunks(nextStation));
+      if (autoCancel) break;
+      await new Promise(r => setTimeout(r, 500));
+    }
+    idx += step;
+  }
+  setNowPlaying(autoCancel ? '⏹ 정지됨' : '🏁 종착역 도착');
+  await new Promise(r => setTimeout(r, 1500));
+  autoMode = false; isPlaying = false; currentStationIdx = -1;
+  hideTrain(); updateUI();
 }
 
 function stopAnnounce() {
   speechSynthesis.cancel();
-  isPlaying = false;
-  currentStationIdx = -1;
-  updateUI();
+  autoCancel = true; isPlaying = false; autoMode = false; currentStationIdx = -1;
+  hideDoor(); hideTrain(); updateUI();
 }
 
-/* ===== UI 렌더링 ===== */
+function moveTrainTo(idx) {
+  const train = document.getElementById('trainIcon');
+  const target = Array.from(document.querySelectorAll('.station')).find(el => parseInt(el.dataset.idx) === idx);
+  if (!target) return;
+  const map = document.getElementById('map');
+  const mapRect = map.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  train.style.top = (targetRect.top - mapRect.top + targetRect.height / 2) + 'px';
+  train.classList.add('visible');
+  target.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+function hideTrain() { document.getElementById('trainIcon').classList.remove('visible'); }
+
+function showDoor(direction) {
+  if (!direction) return;
+  const left = document.getElementById('doorLeft'), right = document.getElementById('doorRight');
+  left.classList.remove('active'); right.classList.remove('active');
+  if (direction === 'left') left.classList.add('active');
+  if (direction === 'right') right.classList.add('active');
+  document.getElementById('doorOverlay').classList.add('show');
+}
+function hideDoor() { document.getElementById('doorOverlay').classList.remove('show'); }
+
+function renderLineSelect() {
+  const sel = document.getElementById('lineSelect');
+  sel.innerHTML = '';
+  Object.keys(lineData).forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k; opt.textContent = lineData[k].name;
+    sel.appendChild(opt);
+  });
+  sel.value = currentLine;
+}
+
+function renderAutoSelects() {
+  const line = lineData[currentLine];
+  const start = document.getElementById('autoStart'), end = document.getElementById('autoEnd');
+  start.innerHTML = ''; end.innerHTML = '';
+  line.stations.forEach((s, i) => {
+    const o1 = document.createElement('option'); o1.value = i; o1.textContent = s.name; start.appendChild(o1);
+    const o2 = document.createElement('option'); o2.value = i; o2.textContent = s.name; end.appendChild(o2);
+  });
+  start.value = 0; end.value = line.stations.length - 1;
+}
+
 function renderLine(lineKey) {
   const line = lineData[lineKey];
   document.documentElement.style.setProperty('--line-color', line.color);
   document.querySelector('header').style.setProperty('--line-color', line.color);
   document.getElementById('lineBadge').textContent = line.badge;
   document.getElementById('lineBadge').style.background = line.color;
-
+  document.getElementById('autoPlayBtn').style.background = line.color;
+  document.getElementById('subtitle').textContent = line.name + ' · ' + line.stations.length + '개 역';
   const map = document.getElementById('map');
-  map.innerHTML = '';
-
-  // 트랙(라인) 배경
-  const track = document.createElement('div');
-  track.className = 'line-track';
+  const train = document.getElementById('trainIcon');
+  map.innerHTML = ''; map.appendChild(train);
+  const track = document.createElement('div'); track.className = 'line-track';
   map.appendChild(track);
-
-  // 루프 구간을 별도 컨테이너로 묶기
   const loopStations = line.stations.filter(s => s.loopStart || s.inLoop || s.loopEnd);
   const mainStations = line.stations.filter(s => !s.loopStart && !s.inLoop && !s.loopEnd);
-
   if (loopStations.length > 0) {
-    const loopBox = document.createElement('div');
-    loopBox.className = 'loop-section';
+    const loopBox = document.createElement('div'); loopBox.className = 'loop-section';
     loopBox.style.setProperty('--line-color', line.color);
-    const label = document.createElement('div');
-    label.className = 'loop-label';
-    label.textContent = '🔁 응암순환';
+    const label = document.createElement('div'); label.className = 'loop-label'; label.textContent = '🔁 응암순환';
     loopBox.appendChild(label);
-
-    loopStations.forEach((s) => {
-      const idx = line.stations.indexOf(s);
-      loopBox.appendChild(createStationElement(s, idx, line));
-    });
+    loopStations.forEach((s) => loopBox.appendChild(createStationElement(s, line.stations.indexOf(s), line)));
     map.appendChild(loopBox);
   }
-
-  mainStations.forEach((s) => {
+  mainStations.forEach((s, i) => {
     const idx = line.stations.indexOf(s);
-    map.appendChild(createStationElement(s, idx, line));
+    const el = createStationElement(s, idx, line);
+    if (i === 0 || i === mainStations.length - 1) el.querySelector('.dot').classList.add('terminal');
+    map.appendChild(el);
   });
+  hideTrain(); renderAutoSelects();
 }
 
 function createStationElement(station, idx, line) {
   const el = document.createElement('div');
-  el.className = 'station';
-  el.dataset.idx = idx;
+  el.className = 'station'; el.dataset.idx = idx;
   el.style.setProperty('--line-color', line.color);
-
   const dot = document.createElement('div');
   dot.className = 'dot' + (station.transfers.length > 0 ? ' transfer' : '');
   el.appendChild(dot);
-
-  const info = document.createElement('div');
-  info.className = 'station-info';
-
-  const nameKo = document.createElement('div');
-  nameKo.className = 'station-name-ko';
-  nameKo.textContent = station.name;
+  const info = document.createElement('div'); info.className = 'station-info';
+  const nameKo = document.createElement('div'); nameKo.className = 'station-name-ko'; nameKo.textContent = station.name;
   info.appendChild(nameKo);
-
-  const nameEn = document.createElement('div');
-  nameEn.className = 'station-name-en';
-  nameEn.textContent = station.nameEn;
+  const nameEn = document.createElement('div'); nameEn.className = 'station-name-en'; nameEn.textContent = station.nameEn;
   info.appendChild(nameEn);
-
   if (station.transfers.length > 0) {
-    const transfers = document.createElement('div');
-    transfers.className = 'transfers';
+    const transfers = document.createElement('div'); transfers.className = 'transfers';
     station.transfers.forEach(t => {
-      const badge = document.createElement('span');
-      badge.className = 'transfer-badge';
-      badge.textContent = /^\d$/.test(t) ? t : (TRANSFER_NAMES[t] || t).replace('선','');
+      const badge = document.createElement('span'); badge.className = 'transfer-badge';
+      badge.textContent = /^\d$/.test(t) ? t : (TRANSFER_BADGE[t] || t);
       badge.style.background = TRANSFER_COLORS[t] || '#9ca3af';
       transfers.appendChild(badge);
     });
     info.appendChild(transfers);
   }
-
   el.appendChild(info);
-
-  const playIcon = document.createElement('div');
-  playIcon.className = 'play-icon';
-  playIcon.innerHTML = '🔊';
+  const playIcon = document.createElement('div'); playIcon.className = 'play-icon'; playIcon.textContent = '🔊';
   el.appendChild(playIcon);
-
-  el.addEventListener('click', () => announce(idx));
+  el.addEventListener('click', () => { if (autoMode) return; announce(idx); });
   return el;
 }
 
 function updateUI() {
-  document.querySelectorAll('.station').forEach(el => {
-    el.classList.toggle('active', parseInt(el.dataset.idx) === currentStationIdx);
-  });
+  document.querySelectorAll('.station').forEach(el => el.classList.toggle('active', parseInt(el.dataset.idx) === currentStationIdx));
   document.getElementById('stopBtn').classList.toggle('active', isPlaying);
-  if (!isPlaying) {
-    document.getElementById('nowPlaying').classList.remove('active');
-  }
+  if (!isPlaying) setTimeout(() => { if (!isPlaying) document.getElementById('nowPlaying').classList.remove('active'); }, 1500);
 }
 
 function setNowPlaying(text) {
-  const np = document.getElementById('nowPlaying');
   document.getElementById('nowPlayingText').textContent = text;
-  np.classList.add('active');
+  document.getElementById('nowPlaying').classList.add('active');
 }
 
-/* ===== 이벤트 ===== */
-document.getElementById('lineSelect').addEventListener('change', (e) => {
-  currentLine = e.target.value;
-  stopAnnounce();
-  renderLine(currentLine);
-});
-document.getElementById('speedSelect').addEventListener('change', (e) => {
-  speechRate = parseFloat(e.target.value);
-});
+document.getElementById('lineSelect').addEventListener('change', (e) => { currentLine = e.target.value; stopAnnounce(); renderLine(currentLine); });
+document.getElementById('speedSelect').addEventListener('change', (e) => { speechRate = parseFloat(e.target.value); });
 document.getElementById('stopBtn').addEventListener('click', stopAnnounce);
+document.getElementById('autoToggleBtn').addEventListener('click', () => { document.getElementById('autoPanel').classList.toggle('open'); });
+document.getElementById('autoPlayBtn').addEventListener('click', () => { ensureAudio(); startAutoRun(); });
+document.addEventListener('click', () => ensureAudio(), { once: true });
 
-/* ===== 시작 ===== */
+renderLineSelect();
 renderLine(currentLine);
 </script>
 </body>
