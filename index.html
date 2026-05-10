@@ -73,14 +73,6 @@
   
   .loop-section { border: 2px dashed color-mix(in srgb, var(--line-color, #CD7C2F) 40%, white); border-radius: 16px; padding: 6px 0; margin-bottom: 8px; margin-left: -10px; padding-left: 10px; position: relative; }
   .loop-label { position: absolute; top: -10px; right: 16px; background: white; padding: 0 8px; font-size: 11px; font-weight: 700; color: var(--line-color, #CD7C2F); }
-  
-  /* Door Overlay Effect - 빨간색 테두리 삭제됨 */
-  .door-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 15; display: none; }
-  .door-overlay.show { display: block; }
-  .door-side { position: absolute; top: 0; bottom: 0; width: 60px; background: linear-gradient(90deg, rgba(17,24,39,0.7), transparent); transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
-  .door-side.left { left: 0; transform: translateX(-100%); }
-  .door-side.right { right: 0; background: linear-gradient(270deg, rgba(17,24,39,0.7), transparent); transform: translateX(100%); }
-  .door-overlay.show .door-side.active { transform: translateX(0); }
 </style>
 </head>
 <body>
@@ -128,11 +120,6 @@
   </div>
   <div class="map" id="map"><div class="train-icon" id="trainIcon"></div></div>
 </main>
-
-<div class="door-overlay" id="doorOverlay">
-  <div class="door-side left" id="doorLeft"></div>
-  <div class="door-side right" id="doorRight"></div>
-</div>
 
 <script>
 // 환승 노선 정보 및 색상
@@ -472,11 +459,9 @@ async function announce(idx) {
   moveTrainTo(idx);
   
   if (autoCancel) return;
-  showDoor(station.doorDirection);
   
   await speakChain(buildAnnouncementChunks(station));
   
-  hideDoor();
   if (!autoMode) { isPlaying = false; currentStationIdx = -1; updateUI(); setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.'); }
 }
 
@@ -503,9 +488,7 @@ async function startAutoRun() {
     setLedBoard(`이번 역은 ${line.stations[idx].name} 역입니다.`);
     
     if (autoCancel) break;
-    showDoor(line.stations[idx].doorDirection);
     await speakChain(buildAnnouncementChunks(line.stations[idx]));
-    hideDoor();
     
     if (autoCancel) break;
     if (idx !== endIdx) {
@@ -532,7 +515,7 @@ async function startAutoRun() {
 function stopAnnounce() {
   speechSynthesis.cancel();
   autoCancel = true; isPlaying = false; autoMode = false; currentStationIdx = -1;
-  hideDoor(); hideTrain(); updateUI();
+  hideTrain(); updateUI();
   setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.');
 }
 
@@ -550,16 +533,6 @@ function moveTrainTo(idx) {
 }
 
 function hideTrain() { document.getElementById('trainIcon').classList.remove('visible'); }
-
-function showDoor(direction) {
-  if (!direction) direction = 'right'; // 기본 애니메이션 방향
-  const left = document.getElementById('doorLeft'), right = document.getElementById('doorRight');
-  left.classList.remove('active'); right.classList.remove('active');
-  if (direction === 'left') left.classList.add('active');
-  if (direction === 'right') right.classList.add('active');
-  document.getElementById('doorOverlay').classList.add('show');
-}
-function hideDoor() { document.getElementById('doorOverlay').classList.remove('show'); }
 
 function updateUI() {
   document.querySelectorAll('.station').forEach(el => el.classList.toggle('active', parseInt(el.dataset.idx) === currentStationIdx));
