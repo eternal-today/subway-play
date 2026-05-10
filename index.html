@@ -36,7 +36,7 @@
   /* LED Display Board */
   .led-board { background: #111; color: #ff9900; height: 36px; overflow: hidden; position: relative; border-radius: 4px; border: 2px solid #333; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
   .led-text { position: absolute; white-space: nowrap; font-family: "Courier New", Courier, monospace; font-weight: bold; font-size: 16px; line-height: 32px; letter-spacing: 1px; transform: translateX(100%); text-shadow: 0 0 4px #ff9900; }
-  .led-board.active .led-text { animation: scrollLeft 8s linear infinite; }
+  .led-board.active .led-text { animation: scrollLeft 15s linear infinite; } /* 속도를 8s -> 15s로 늘려 천천히 지나가게 수정 */
   @keyframes scrollLeft { 0% { transform: translateX(100vw); } 100% { transform: translateX(-150%); } }
 
   /* Map & Stations */
@@ -123,8 +123,8 @@
 
 <main>
   <div class="helper">
-    💡 <b>역 탭</b>: 딩동 소리와 함께 안내방송 자동 재생 (다시 탭하면 정지)<br>
-    🚂 <b>자동운행</b>: 출발/도착역을 고르면 기차가 차임벨과 함께 이동해요
+    💡 <b>역 탭</b>: 안내방송 자동 재생 (다시 탭하면 정지)<br>
+    🚂 <b>자동운행</b>: 출발/도착역을 고르면 기차가 역마다 이동해요
   </div>
   <div class="map" id="map"><div class="train-icon" id="trainIcon"></div></div>
 </main>
@@ -141,7 +141,7 @@ const TRANSFER_NAMES_KO = { '1':'1호선','2':'2호선','3':'3호선','4':'4호�
 const TRANSFER_NAMES_EN = { '1':'Line 1','2':'Line 2','3':'Line 3','4':'Line 4','5':'Line 5','6':'Line 6','7':'Line 7','8':'Line 8','9':'Line 9','경의중앙':'the Gyeongui-Jungang Line','공항철도':'the Airport Railroad','경춘':'the Gyeongchun Line','우이신설':'the Ui-Sinseol Line','신분당':'the Shinbundang Line','수인분당':'the Suin-Bundang Line','GTX-A':'GTX-A' };
 const TRANSFER_BADGE = { '경의중앙':'경중','공항철도':'공항','경춘':'경춘','우이신설':'우이','신분당':'신분당','수인분당':'수분','GTX-A':'GTX' };
 
-// 데이터 간소화 (enSay 제거)
+// 원본 데이터 전체 복원
 const lineData = {
 '6': { name:'6호선', nameEn:'Line 6', color:'#CD7C2F', badge:'6', stations:[
   { name:'응암', nameEn:'Eungam', transfers:[], doorDirection:null, loopStart:true },
@@ -188,21 +188,202 @@ const lineData = {
   { name:'시청', nameEn:'City Hall', transfers:['1'], doorDirection:null },
   { name:'을지로입구', nameEn:'Euljiro 1-ga', transfers:[], doorDirection:null },
   { name:'을지로3가', nameEn:'Euljiro 3-ga', transfers:['3'], doorDirection:null },
+  { name:'을지로4가', nameEn:'Euljiro 4-ga', transfers:['5'], doorDirection:null },
   { name:'동대문역사문화공원', nameEn:'Dongdaemun History Culture Park', transfers:['4','5'], doorDirection:null },
+  { name:'신당', nameEn:'Sindang', transfers:['6'], doorDirection:null },
+  { name:'상왕십리', nameEn:'Sangwangsimni', transfers:[], doorDirection:null },
   { name:'왕십리', nameEn:'Wangsimni', transfers:['5','경의중앙','수인분당'], doorDirection:null },
+  { name:'한양대', nameEn:'Hanyang University', transfers:[], doorDirection:null },
+  { name:'뚝섬', nameEn:'Ttukseom', transfers:[], doorDirection:null },
+  { name:'성수', nameEn:'Seongsu', transfers:[], doorDirection:null },
   { name:'건대입구', nameEn:'Konkuk University', transfers:['7'], doorDirection:null },
+  { name:'구의', nameEn:'Guui', transfers:[], doorDirection:null },
+  { name:'강변', nameEn:'Gangbyeon', transfers:[], doorDirection:null },
+  { name:'잠실나루', nameEn:'Jamsillaru', transfers:[], doorDirection:null },
   { name:'잠실', nameEn:'Jamsil', transfers:['8'], doorDirection:null },
+  { name:'잠실새내', nameEn:'Jamsilsaenae', transfers:[], doorDirection:null },
+  { name:'종합운동장', nameEn:'Sports Complex', transfers:[], doorDirection:null },
+  { name:'삼성', nameEn:'Samseong', transfers:[], doorDirection:null },
+  { name:'선릉', nameEn:'Seolleung', transfers:['수인분당'], doorDirection:null },
+  { name:'역삼', nameEn:'Yeoksam', transfers:[], doorDirection:null },
   { name:'강남', nameEn:'Gangnam', transfers:['신분당'], doorDirection:null },
   { name:'교대', nameEn:'Seoul National University of Education', transfers:['3'], doorDirection:null },
+  { name:'서초', nameEn:'Seocho', transfers:[], doorDirection:null },
+  { name:'방배', nameEn:'Bangbae', transfers:[], doorDirection:null },
   { name:'사당', nameEn:'Sadang', transfers:['4'], doorDirection:null },
+  { name:'낙성대', nameEn:'Nakseongdae', transfers:[], doorDirection:null },
   { name:'서울대입구', nameEn:'Seoul National University', transfers:[], doorDirection:null },
+  { name:'봉천', nameEn:'Bongcheon', transfers:[], doorDirection:null },
+  { name:'신림', nameEn:'Sillim', transfers:['신분당'], doorDirection:null },
+  { name:'신대방', nameEn:'Sindaebang', transfers:[], doorDirection:null },
+  { name:'구로디지털단지', nameEn:'Guro Digital Complex', transfers:[], doorDirection:null },
+  { name:'대림', nameEn:'Daerim', transfers:['7'], doorDirection:null },
   { name:'신도림', nameEn:'Sindorim', transfers:['1'], doorDirection:null },
-  { name:'홍대입구', nameEn:'Hongik University', transfers:['경의중앙','공항철도'], doorDirection:null }
+  { name:'문래', nameEn:'Mullae', transfers:[], doorDirection:null },
+  { name:'영등포구청', nameEn:'Yeongdeungpo-gu Office', transfers:['5'], doorDirection:null },
+  { name:'당산', nameEn:'Dangsan', transfers:['9'], doorDirection:null },
+  { name:'합정', nameEn:'Hapjeong', transfers:['6'], doorDirection:null },
+  { name:'홍대입구', nameEn:'Hongik University', transfers:['경의중앙','공항철도'], doorDirection:null },
+  { name:'신촌', nameEn:'Sinchon', transfers:[], doorDirection:null },
+  { name:'이대', nameEn:'Ewha Womans University', transfers:[], doorDirection:null },
+  { name:'아현', nameEn:'Ahyeon', transfers:[], doorDirection:null },
+  { name:'충정로', nameEn:'Chungjeongno', transfers:['5'], doorDirection:null }
+]},
+'3': { name:'3호선', nameEn:'Line 3', color:'#EF7C1C', badge:'3', stations:[
+  { name:'대화', nameEn:'Daehwa', transfers:[], doorDirection:null },
+  { name:'주엽', nameEn:'Juyeop', transfers:[], doorDirection:null },
+  { name:'정발산', nameEn:'Jeongbalsan', transfers:[], doorDirection:null },
+  { name:'마두', nameEn:'Madu', transfers:[], doorDirection:null },
+  { name:'백석', nameEn:'Baekseok', transfers:[], doorDirection:null },
+  { name:'대곡', nameEn:'Daegok', transfers:['경의중앙','GTX-A'], doorDirection:null },
+  { name:'화정', nameEn:'Hwajeong', transfers:[], doorDirection:null },
+  { name:'원당', nameEn:'Wondang', transfers:[], doorDirection:null },
+  { name:'원흥', nameEn:'Wonheung', transfers:[], doorDirection:null },
+  { name:'삼송', nameEn:'Samsong', transfers:[], doorDirection:null },
+  { name:'지축', nameEn:'Jichuk', transfers:[], doorDirection:null },
+  { name:'구파발', nameEn:'Gupabal', transfers:[], doorDirection:null },
+  { name:'연신내', nameEn:'Yeonsinnae', transfers:['6'], doorDirection:null },
+  { name:'불광', nameEn:'Bulgwang', transfers:['6'], doorDirection:null },
+  { name:'녹번', nameEn:'Nokbeon', transfers:[], doorDirection:null },
+  { name:'홍제', nameEn:'Hongje', transfers:[], doorDirection:null },
+  { name:'무악재', nameEn:'Muakjae', transfers:[], doorDirection:null },
+  { name:'독립문', nameEn:'Dongnimmun', transfers:[], doorDirection:null },
+  { name:'경복궁', nameEn:'Gyeongbokgung', transfers:[], doorDirection:null },
+  { name:'안국', nameEn:'Anguk', transfers:[], doorDirection:null },
+  { name:'종로3가', nameEn:'Jongno 3-ga', transfers:['1','5'], doorDirection:null },
+  { name:'을지로3가', nameEn:'Euljiro 3-ga', transfers:['2'], doorDirection:null },
+  { name:'충무로', nameEn:'Chungmuro', transfers:['4'], doorDirection:null },
+  { name:'동대입구', nameEn:'Dongguk University', transfers:[], doorDirection:null },
+  { name:'약수', nameEn:'Yaksu', transfers:['6'], doorDirection:null },
+  { name:'금호', nameEn:'Geumho', transfers:[], doorDirection:null },
+  { name:'옥수', nameEn:'Oksu', transfers:['경의중앙'], doorDirection:null },
+  { name:'압구정', nameEn:'Apgujeong', transfers:[], doorDirection:null },
+  { name:'신사', nameEn:'Sinsa', transfers:['신분당'], doorDirection:null },
+  { name:'잠원', nameEn:'Jamwon', transfers:[], doorDirection:null },
+  { name:'고속터미널', nameEn:'Express Bus Terminal', transfers:['7','9'], doorDirection:null },
+  { name:'교대', nameEn:'Seoul National University of Education', transfers:['2'], doorDirection:null },
+  { name:'남부터미널', nameEn:'Nambu Bus Terminal', transfers:[], doorDirection:null },
+  { name:'양재', nameEn:'Yangjae', transfers:['신분당'], doorDirection:null },
+  { name:'매봉', nameEn:'Maebong', transfers:[], doorDirection:null },
+  { name:'도곡', nameEn:'Dogok', transfers:['수인분당'], doorDirection:null },
+  { name:'대치', nameEn:'Daechi', transfers:[], doorDirection:null },
+  { name:'학여울', nameEn:'Hangnyeoul', transfers:[], doorDirection:null },
+  { name:'대청', nameEn:'Daecheong', transfers:[], doorDirection:null },
+  { name:'일원', nameEn:'Irwon', transfers:[], doorDirection:null },
+  { name:'수서', nameEn:'Suseo', transfers:['수인분당'], doorDirection:null },
+  { name:'가락시장', nameEn:'Garak Market', transfers:['8'], doorDirection:null },
+  { name:'경찰병원', nameEn:'Police Hospital', transfers:[], doorDirection:null },
+  { name:'오금', nameEn:'Ogeum', transfers:['5'], doorDirection:null }
+]},
+'5': { name:'5호선', nameEn:'Line 5', color:'#996CAC', badge:'5', stations:[
+  { name:'방화', nameEn:'Banghwa', transfers:[], doorDirection:null },
+  { name:'개화산', nameEn:'Gaehwasan', transfers:[], doorDirection:null },
+  { name:'김포공항', nameEn:'Gimpo International Airport', transfers:['9','공항철도'], doorDirection:null },
+  { name:'송정', nameEn:'Songjeong', transfers:[], doorDirection:null },
+  { name:'마곡', nameEn:'Magok', transfers:[], doorDirection:null },
+  { name:'발산', nameEn:'Balsan', transfers:[], doorDirection:null },
+  { name:'우장산', nameEn:'Ujangsan', transfers:[], doorDirection:null },
+  { name:'화곡', nameEn:'Hwagok', transfers:[], doorDirection:null },
+  { name:'까치산', nameEn:'Kkachisan', transfers:['2'], doorDirection:null },
+  { name:'신정', nameEn:'Sinjeong', transfers:[], doorDirection:null },
+  { name:'목동', nameEn:'Mok-dong', transfers:[], doorDirection:null },
+  { name:'오목교', nameEn:'Omokgyo', transfers:[], doorDirection:null },
+  { name:'양평', nameEn:'Yangpyeong', transfers:[], doorDirection:null },
+  { name:'영등포구청', nameEn:'Yeongdeungpo-gu Office', transfers:['2'], doorDirection:null },
+  { name:'영등포시장', nameEn:'Yeongdeungpo Market', transfers:[], doorDirection:null },
+  { name:'신길', nameEn:'Singil', transfers:['1'], doorDirection:null },
+  { name:'여의도', nameEn:'Yeouido', transfers:['9'], doorDirection:null },
+  { name:'여의나루', nameEn:'Yeouinaru', transfers:[], doorDirection:null },
+  { name:'마포', nameEn:'Mapo', transfers:[], doorDirection:null },
+  { name:'공덕', nameEn:'Gongdeok', transfers:['6','경의중앙','공항철도'], doorDirection:null },
+  { name:'애오개', nameEn:'Aeogae', transfers:[], doorDirection:null },
+  { name:'충정로', nameEn:'Chungjeongno', transfers:['2'], doorDirection:null },
+  { name:'서대문', nameEn:'Seodaemun', transfers:[], doorDirection:null },
+  { name:'광화문', nameEn:'Gwanghwamun', transfers:[], doorDirection:null },
+  { name:'종로3가', nameEn:'Jongno 3-ga', transfers:['1','3'], doorDirection:null },
+  { name:'을지로4가', nameEn:'Euljiro 4-ga', transfers:['2'], doorDirection:null },
+  { name:'동대문역사문화공원', nameEn:'Dongdaemun History Culture Park', transfers:['2','4'], doorDirection:null },
+  { name:'청구', nameEn:'Cheonggu', transfers:['6'], doorDirection:null },
+  { name:'신금호', nameEn:'Singeumho', transfers:[], doorDirection:null },
+  { name:'행당', nameEn:'Haengdang', transfers:[], doorDirection:null },
+  { name:'왕십리', nameEn:'Wangsimni', transfers:['2','경의중앙','수인분당'], doorDirection:null },
+  { name:'마장', nameEn:'Majang', transfers:[], doorDirection:null },
+  { name:'답십리', nameEn:'Dapsimni', transfers:[], doorDirection:null },
+  { name:'장한평', nameEn:'Janghanpyeong', transfers:[], doorDirection:null },
+  { name:'군자', nameEn:'Gunja', transfers:['7'], doorDirection:null },
+  { name:'아차산', nameEn:'Achasan', transfers:[], doorDirection:null },
+  { name:'광나루', nameEn:'Gwangnaru', transfers:[], doorDirection:null },
+  { name:'천호', nameEn:'Cheonho', transfers:['8'], doorDirection:null },
+  { name:'강동', nameEn:'Gangdong', transfers:[], doorDirection:null },
+  { name:'길동', nameEn:'Gil-dong', transfers:[], doorDirection:null },
+  { name:'굽은다리', nameEn:'Gubeundari', transfers:[], doorDirection:null },
+  { name:'명일', nameEn:'Myeongil', transfers:[], doorDirection:null },
+  { name:'고덕', nameEn:'Godeok', transfers:[], doorDirection:null },
+  { name:'상일동', nameEn:'Sangil-dong', transfers:[], doorDirection:null },
+  { name:'강일', nameEn:'Gangil', transfers:[], doorDirection:null },
+  { name:'미사', nameEn:'Misa', transfers:[], doorDirection:null },
+  { name:'하남풍산', nameEn:'Hanam Pungsan', transfers:[], doorDirection:null },
+  { name:'하남시청', nameEn:'Hanam City Hall', transfers:[], doorDirection:null },
+  { name:'하남검단산', nameEn:'Hanam Geomdansan', transfers:[], doorDirection:null }
+]},
+'경의중앙': { name:'경의중앙선', nameEn:'Gyeongui-Jungang Line', color:'#77C4A3', badge:'경중', stations:[
+  { name:'문산', nameEn:'Munsan', transfers:[], doorDirection:null },
+  { name:'파주', nameEn:'Paju', transfers:[], doorDirection:null },
+  { name:'월롱', nameEn:'Wollong', transfers:[], doorDirection:null },
+  { name:'금촌', nameEn:'Geumchon', transfers:[], doorDirection:null },
+  { name:'금릉', nameEn:'Geumneung', transfers:[], doorDirection:null },
+  { name:'운정', nameEn:'Unjeong', transfers:[], doorDirection:null },
+  { name:'야당', nameEn:'Yadang', transfers:[], doorDirection:null },
+  { name:'탄현', nameEn:'Tanhyeon', transfers:[], doorDirection:null },
+  { name:'일산', nameEn:'Ilsan', transfers:[], doorDirection:null },
+  { name:'풍산', nameEn:'Pungsan', transfers:[], doorDirection:null },
+  { name:'백마', nameEn:'Baengma', transfers:[], doorDirection:null },
+  { name:'곡산', nameEn:'Goksan', transfers:[], doorDirection:null },
+  { name:'대곡', nameEn:'Daegok', transfers:['3','GTX-A'], doorDirection:null },
+  { name:'능곡', nameEn:'Neunggok', transfers:[], doorDirection:null },
+  { name:'행신', nameEn:'Haengsin', transfers:[], doorDirection:null },
+  { name:'강매', nameEn:'Gangmae', transfers:[], doorDirection:null },
+  { name:'화전', nameEn:'Hwajeon', transfers:[], doorDirection:null },
+  { name:'수색', nameEn:'Susaek', transfers:[], doorDirection:null },
+  { name:'디지털미디어시티', nameEn:'Digital Media City', transfers:['6','공항철도'], doorDirection:null },
+  { name:'가좌', nameEn:'Gajwa', transfers:[], doorDirection:null },
+  { name:'홍대입구', nameEn:'Hongik University', transfers:['2','공항철도'], doorDirection:null },
+  { name:'서강대', nameEn:'Sogang University', transfers:[], doorDirection:null },
+  { name:'공덕', nameEn:'Gongdeok', transfers:['5','6','공항철도'], doorDirection:null },
+  { name:'효창공원앞', nameEn:'Hyochang Park', transfers:['6'], doorDirection:null },
+  { name:'용산', nameEn:'Yongsan', transfers:['1'], doorDirection:null },
+  { name:'이촌', nameEn:'Ichon', transfers:['4'], doorDirection:null },
+  { name:'서빙고', nameEn:'Seobinggo', transfers:[], doorDirection:null },
+  { name:'한남', nameEn:'Hannam', transfers:[], doorDirection:null },
+  { name:'옥수', nameEn:'Oksu', transfers:['3'], doorDirection:null },
+  { name:'응봉', nameEn:'Eungbong', transfers:[], doorDirection:null },
+  { name:'왕십리', nameEn:'Wangsimni', transfers:['2','5','수인분당'], doorDirection:null },
+  { name:'청량리', nameEn:'Cheongnyangni', transfers:['1'], doorDirection:null },
+  { name:'회기', nameEn:'Hoegi', transfers:['1'], doorDirection:null },
+  { name:'중랑', nameEn:'Jungnang', transfers:[], doorDirection:null },
+  { name:'상봉', nameEn:'Sangbong', transfers:['7','경춘'], doorDirection:null },
+  { name:'망우', nameEn:'Mangu', transfers:['경춘'], doorDirection:null },
+  { name:'양원', nameEn:'Yangwon', transfers:[], doorDirection:null },
+  { name:'구리', nameEn:'Guri', transfers:[], doorDirection:null },
+  { name:'도농', nameEn:'Donong', transfers:[], doorDirection:null },
+  { name:'양정', nameEn:'Yangjeong', transfers:[], doorDirection:null },
+  { name:'덕소', nameEn:'Deokso', transfers:[], doorDirection:null },
+  { name:'도심', nameEn:'Dosim', transfers:[], doorDirection:null },
+  { name:'팔당', nameEn:'Paldang', transfers:[], doorDirection:null },
+  { name:'운길산', nameEn:'Ungilsan', transfers:[], doorDirection:null },
+  { name:'양수', nameEn:'Yangsu', transfers:[], doorDirection:null },
+  { name:'신원', nameEn:'Sinwon', transfers:[], doorDirection:null },
+  { name:'국수', nameEn:'Guksu', transfers:[], doorDirection:null },
+  { name:'아신', nameEn:'Asin', transfers:[], doorDirection:null },
+  { name:'오빈', nameEn:'Obin', transfers:[], doorDirection:null },
+  { name:'양평', nameEn:'Yangpyeong', transfers:[], doorDirection:null },
+  { name:'원덕', nameEn:'Wondeok', transfers:[], doorDirection:null },
+  { name:'용문', nameEn:'Yongmun', transfers:[], doorDirection:null }
 ]}
 };
 
 let currentLine = '6', currentStationIdx = -1, isPlaying = false, speechRate = 0.95;
-let koreanVoice = null, englishVoice = null, autoMode = false, autoCancel = false, audioCtx = null;
+let koreanVoice = null, englishVoice = null, autoMode = false, autoCancel = false;
 
 // 보이스 로드 (한글, 영문 최적화)
 function loadVoices() {
@@ -212,53 +393,6 @@ function loadVoices() {
 }
 loadVoices();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
-
-// 오디오 컨텍스트 활성화
-function ensureAudio() {
-  if (!audioCtx) { try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e) { return null; } }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  return audioCtx;
-}
-
-// 실제 지하철 느낌의 차임벨 생성기
-function playSubwayChime(isTransfer) {
-  const ctx = ensureAudio(); 
-  if (!ctx) return Promise.resolve();
-  
-  const now = ctx.currentTime;
-  // 환승역이면 4음계 멜로디(솔-도-미-솔), 일반역이면 2음계(딩-동)
-  const freqs = isTransfer ? [392.00, 523.25, 659.25, 783.99] : [659.25, 523.25];
-  const noteDuration = 1.2;
-  const noteSpacing = isTransfer ? 0.2 : 0.4;
-  
-  freqs.forEach((f, i) => {
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const gain = ctx.createGain();
-    
-    osc1.type = 'sine';
-    osc2.type = 'triangle'; // 전자음 느낌 혼합
-    osc1.frequency.value = f;
-    osc2.frequency.value = f;
-    
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(ctx.destination);
-    
-    const startTime = now + (i * noteSpacing);
-    gain.gain.setValueAtTime(0, startTime);
-    gain.gain.linearRampToValueAtTime(0.15, startTime + 0.02); // 타격감
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + noteDuration); // 잔향
-    
-    osc1.start(startTime);
-    osc2.start(startTime);
-    osc1.stop(startTime + noteDuration);
-    osc2.stop(startTime + noteDuration);
-  });
-  
-  const totalMs = (freqs.length * noteSpacing + 0.8) * 1000;
-  return new Promise(res => setTimeout(res, totalMs));
-}
 
 // 안내방송 텍스트 및 속성 생성
 function buildAnnouncementChunks(station) {
@@ -319,7 +453,7 @@ async function speakChain(chunks) {
   }
 }
 
-// 안내방송 실행 메인 함수
+// 안내방송 실행 메인 함수 (차임벨 제거됨)
 async function announce(idx) {
   const line = lineData[currentLine];
   const station = line.stations[idx];
@@ -328,7 +462,6 @@ async function announce(idx) {
   if (isPlaying && currentStationIdx === idx && !autoMode) { stopAnnounce(); return; }
   
   stopAnnounce();
-  ensureAudio();
   
   currentStationIdx = idx; 
   isPlaying = true; 
@@ -337,10 +470,6 @@ async function announce(idx) {
   updateUI();
   setLedBoard(`이번 역은 ${station.name} 역입니다. This stop is ${station.nameEn}.`);
   moveTrainTo(idx);
-  
-  // 차임벨 재생 (환승역 여부에 따라 멜로디 변경)
-  const isTransfer = station.transfers.length > 0;
-  await playSubwayChime(isTransfer);
   
   if (autoCancel) return;
   showDoor(station.doorDirection);
@@ -372,8 +501,6 @@ async function startAutoRun() {
     currentStationIdx = idx; updateUI(); moveTrainTo(idx);
     
     setLedBoard(`이번 역은 ${line.stations[idx].name} 역입니다.`);
-    const isTransfer = line.stations[idx].transfers.length > 0;
-    await playSubwayChime(isTransfer);
     
     if (autoCancel) break;
     showDoor(line.stations[idx].doorDirection);
@@ -550,8 +677,7 @@ document.getElementById('lineSelect').addEventListener('change', (e) => { curren
 document.getElementById('speedSelect').addEventListener('change', (e) => { speechRate = parseFloat(e.target.value); });
 document.getElementById('stopBtn').addEventListener('click', stopAnnounce);
 document.getElementById('autoToggleBtn').addEventListener('click', () => { document.getElementById('autoPanel').classList.toggle('open'); });
-document.getElementById('autoPlayBtn').addEventListener('click', () => { ensureAudio(); startAutoRun(); });
-document.addEventListener('click', () => ensureAudio(), { once: true });
+document.getElementById('autoPlayBtn').addEventListener('click', () => { startAutoRun(); });
 
 // 초기화
 renderLineSelect();
