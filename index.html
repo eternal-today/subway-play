@@ -36,7 +36,7 @@
   /* LED Display Board */
   .led-board { background: #111; color: #ff9900; height: 36px; overflow: hidden; position: relative; border-radius: 4px; border: 2px solid #333; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
   .led-text { position: absolute; white-space: nowrap; font-family: "Courier New", Courier, monospace; font-weight: bold; font-size: 16px; line-height: 32px; letter-spacing: 1px; transform: translateX(100%); text-shadow: 0 0 4px #ff9900; }
-  .led-board.active .led-text { animation: scrollLeft 15s linear infinite; } /* 속도를 8s -> 15s로 늘려 천천히 지나가게 수정 */
+  .led-board.active .led-text { animation: scrollLeft 15s linear infinite; }
   @keyframes scrollLeft { 0% { transform: translateX(100vw); } 100% { transform: translateX(-150%); } }
 
   /* Map & Stations */
@@ -74,12 +74,12 @@
   .loop-section { border: 2px dashed color-mix(in srgb, var(--line-color, #CD7C2F) 40%, white); border-radius: 16px; padding: 6px 0; margin-bottom: 8px; margin-left: -10px; padding-left: 10px; position: relative; }
   .loop-label { position: absolute; top: -10px; right: 16px; background: white; padding: 0 8px; font-size: 11px; font-weight: 700; color: var(--line-color, #CD7C2F); }
   
-  /* Door Overlay Effect */
+  /* Door Overlay Effect - 빨간색 테두리 삭제됨 */
   .door-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 15; display: none; }
   .door-overlay.show { display: block; }
   .door-side { position: absolute; top: 0; bottom: 0; width: 60px; background: linear-gradient(90deg, rgba(17,24,39,0.7), transparent); transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
-  .door-side.left { left: 0; transform: translateX(-100%); border-right: 4px solid #ef4444; }
-  .door-side.right { right: 0; background: linear-gradient(270deg, rgba(17,24,39,0.7), transparent); transform: translateX(100%); border-left: 4px solid #ef4444; }
+  .door-side.left { left: 0; transform: translateX(-100%); }
+  .door-side.right { right: 0; background: linear-gradient(270deg, rgba(17,24,39,0.7), transparent); transform: translateX(100%); }
   .door-overlay.show .door-side.active { transform: translateX(0); }
 </style>
 </head>
@@ -399,13 +399,13 @@ function buildAnnouncementChunks(station) {
   const chunks = [];
   const isTransfer = station.transfers && station.transfers.length > 0;
   
-  // 1. 한국어 텍스트 (쉼표를 활용하여 자연스럽게 끊어 읽기)
+  // 1. 한국어 텍스트 (마침표를 활용하여 자연스럽게 끊어 읽기)
   let koText;
   if (isTransfer) {
     const tt = station.transfers.map(t => TRANSFER_NAMES_KO[t] || (t+'호선')).join(', ');
-    koText = `이번 역은, ${tt}로 갈아타실 수 있는, ${station.name}, ${station.name}, 역입니다.`;
+    koText = `이번 역은, ${tt}로 갈아타실 수 있는, ${station.name}. ${station.name}, 역입니다.`;
   } else {
-    koText = `이번 역은, ${station.name}, ${station.name}, 역입니다.`;
+    koText = `이번 역은, ${station.name}. ${station.name}, 역입니다.`;
   }
   
   if (station.doorDirection === 'left') koText += ' 내리실 문은, 왼쪽입니다.';
@@ -514,7 +514,7 @@ async function startAutoRun() {
       
       const nextStation = line.stations[idx + step];
       setLedBoard(`다음 역은 ${nextStation.name} 역입니다.`);
-      await speakChunk({ text: `다음 역은, ${nextStation.name}, ${nextStation.name}, 역입니다.`, lang: 'ko-KR', voice: koreanVoice });
+      await speakChunk({ text: `다음 역은, ${nextStation.name}. ${nextStation.name}, 역입니다.`, lang: 'ko-KR', voice: koreanVoice });
       
       if (autoCancel) break;
       await new Promise(r => setTimeout(r, 800));
