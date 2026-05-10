@@ -403,9 +403,9 @@ function buildAnnouncementChunks(station) {
   let koText;
   if (isTransfer) {
     const tt = station.transfers.map(t => TRANSFER_NAMES_KO[t] || (t+'호선')).join(', ');
-    koText = `이번 역은, ${tt}로 갈아타실 수 있는, ${station.name}. ${station.name}, 역입니다.`;
+    koText = `이번 역은, ${tt}으로 갈아타실 수 있는, ${station.name}. ${station.name} 역입니다.`;
   } else {
-    koText = `이번 역은, ${station.name}. ${station.name}, 역입니다.`;
+    koText = `이번 역은, ${station.name}. ${station.name} 역입니다.`;
   }
   
   if (station.doorDirection === 'left') koText += ' 내리실 문은, 왼쪽입니다.';
