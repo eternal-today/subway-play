@@ -863,7 +863,10 @@ function setLedBoard(text) {
 function renderLineSelect() {
   const sel = document.getElementById('lineSelect');
   sel.innerHTML = '';
-  Object.keys(lineData).forEach(k => {
+  // 정렬 순서를 직접 지정하여 5호선과 5호선 마천행이 붙어 나오도록 수정
+  const lineOrder = ['1', '2', '3', '4', '5', '5_2', '6', '7', '8', '9', '경의중앙'];
+  lineOrder.forEach(k => {
+    if (!lineData[k]) return;
     const opt = document.createElement('option');
     opt.value = k; opt.textContent = lineData[k].name;
     sel.appendChild(opt);
