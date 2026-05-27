@@ -1003,9 +1003,9 @@ async function startAutoRun() {
     if (idx === endIdx) {
       const terminalKo = line.stations[idx].name;
       const terminalEn = getPhoneticEn(line.stations[idx].nameEn);
-      setLedBoard(`이 열차의 종착역, ${terminalKo} 역입니다. 내리실 때 잊으신 물건 없는지 확인하시기 바랍니다.`);
+      setLedBoard(`이번역은 우리 열차의 종착역인, ${terminalKo} 역입니다. 내리실 때 잊으신 물건 없는지 확인하시기 바랍니다.`);
       await speakChunk({ 
-        text: `우리 열차의 종착역, ${terminalKo}. ${terminalKo} 역입니다. 내리실 때는 두고 내리시는 물건이 없는지 다시 한 번 확인하시기 바랍니다.`, 
+        text: `이번역은 우리 열차의 종착역인, ${terminalKo}. ${terminalKo} 역입니다. 내리실 때는 두고 내리시는 물건이 없는지 다시 한 번 확인하시기 바랍니다.`, 
         lang: 'ko-KR', 
         voice: koreanVoice 
       });
