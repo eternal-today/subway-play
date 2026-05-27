@@ -1048,10 +1048,19 @@ async function startAutoRun() {
     if (autoCancel) break;
     if (playedRandom) await new Promise(r => setTimeout(r, 500));
     
-    // 1. 종착역이면 종착역 안내(국문+영문)만 재생하고 종료
+    // 1. 도착역(자동운행 마지막)에서 처리 — 실제 노선 종착역 여부에 따라 분기
     if (idx === endIdx) {
-      setLedBoard(`이번 역은 우리 열차의 종착역, ${line.stations[idx].name} 역입니다. This is the last stop, ${line.stations[idx].nameEn}.`);
-      await speakChain(buildTerminalAnnouncementChunks(line.stations[idx]));
+      const isRealTerminal = (idx === 0 || idx === line.stations.length - 1);
+      
+      if (isRealTerminal) {
+        // 실제 노선의 종착역: 종착역 안내(국문+영문)
+        setLedBoard(`이번 역은 우리 열차의 종착역, ${line.stations[idx].name} 역입니다. This is the last stop, ${line.stations[idx].nameEn}.`);
+        await speakChain(buildTerminalAnnouncementChunks(line.stations[idx]));
+      } else {
+        // 중간 역에서 자동운행 종료: 일반 안내만
+        setLedBoard(`이번 역은 ${line.stations[idx].name} 역입니다. This stop is ${line.stations[idx].nameEn}.`);
+        await speakChain(buildAnnouncementChunks(line.stations[idx]));
+      }
       if (autoCancel) break;
       break;
     }
@@ -1063,9 +1072,8 @@ async function startAutoRun() {
     
     await new Promise(r => setTimeout(r, 800));
     
-    // 2. 출발 멜로디 + 출입문 닫힘 안내
+    // 2. 출입문 닫힘 안내 (발차음 제거)
     setLedBoard('열차가 곧 출발합니다. 출입문 닫힙니다.');
-    playDepartureChime();
     await new Promise(r => setTimeout(r, 1000));
 
     // 3. "다음 역은 ~" 안내방송
@@ -1085,7 +1093,12 @@ async function startAutoRun() {
   }
   
   if (!autoCancel) {
-    setLedBoard('종착역에 도착했습니다. 안녕히 가십시오.');
+    const isRealTerminal = (idx === 0 || idx === line.stations.length - 1);
+    if (isRealTerminal) {
+      setLedBoard('종착역에 도착했습니다. 안녕히 가십시오.');
+    } else {
+      setLedBoard(`${line.stations[idx].name} 역에 도착했습니다. 안녕히 가십시오.`);
+    }
   } else {
     setLedBoard('운행이 중단되었습니다.');
   }
