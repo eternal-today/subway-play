@@ -66,7 +66,9 @@
   .station-name-en { font-size: 12px; color: #6b7280; margin-top: 2px; }
   
   .transfers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-  .transfer-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 11px; font-weight: 700; color: white; }
+  .transfer-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 11px; font-weight: 700; color: white; transition: transform 0.1s; }
+  .transfer-badge.clickable { cursor: pointer; }
+  .transfer-badge.clickable:active { transform: scale(0.9); }
   
   .play-icon { flex: 0 0 auto; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; font-size: 18px; }
   .station.active .play-icon { opacity: 1; }
@@ -115,6 +117,7 @@
 <main>
   <div class="helper">
     💡 <b>역 탭</b>: 안내방송 자동 재생 (다시 탭하면 정지)<br>
+    🔄 <b>환승 뱃지 탭</b>: 해당 노선으로 바로 이동 (안내 중에는 비활성)<br>
     🚂 <b>자동운행</b>: 출발/도착역을 고르면 기차가 역마다 이동해요
   </div>
   <div class="map" id="map"><div class="train-icon" id="trainIcon"></div></div>
@@ -780,13 +783,36 @@ const lineData = {
   { name:'김유정', nameEn:'Gimyujeong', transfers:[] },
   { name:'남춘천', nameEn:'Namchuncheon', transfers:[] },
   { name:'춘천', nameEn:'Chuncheon', transfers:[] }
+]},
+'공항철도': { name:'공항철도(일반)', nameEn:'Airport Railroad (All Stop)', color:'#0090D2', badge:'공항', stations:[
+  { name:'서울역', nameEn:'Seoul Station', transfers:['1','4','경의중앙','GTX-A'] },
+  { name:'공덕', nameEn:'Gongdeok', transfers:['5','6','경의중앙'] },
+  { name:'홍대입구', nameEn:'Hongik University', transfers:['2','경의중앙'] },
+  { name:'디지털미디어시티', nameEn:'Digital Media City', transfers:['6','경의중앙'] },
+  { name:'마곡나루', nameEn:'Magongnaru', transfers:['9'] },
+  { name:'김포공항', nameEn:'Gimpo Int\'l Airport', transfers:['5','9','서해'] },
+  { name:'계양', nameEn:'Gyeyang', transfers:['인천1'] },
+  { name:'검암', nameEn:'Geomam', transfers:['인천2'] },
+  { name:'청라국제도시', nameEn:'Cheongna Int\'l City', transfers:[] },
+  { name:'영종', nameEn:'Yeongjong', transfers:[] },
+  { name:'운서', nameEn:'Unseo', transfers:[] },
+  { name:'공항화물청사', nameEn:'Air Cargo Terminal', transfers:[] },
+  { name:'인천공항1터미널', nameEn:'Incheon Int\'l Airport Terminal 1', transfers:[] },
+  { name:'인천공항2터미널', nameEn:'Incheon Int\'l Airport Terminal 2', transfers:[] }
 ]}
 };
 
-let currentLine = '6', currentStationIdx = -1, isPlaying = false, speechRate = 1.0;
+// 시작 노선: localStorage 우선, 없으면 6호선
+let currentLine = '6';
+try {
+  const saved = localStorage.getItem('lastLine');
+  if (saved && lineData[saved]) currentLine = saved;
+} catch(_) {}
+
+let currentStationIdx = -1, isPlaying = false, speechRate = 1.0;
 let koreanVoice = null, englishVoice = null, autoMode = false, autoCancel = false;
 let stationPlayCount = 0;
-let nextRandomTarget = Math.floor(Math.random() * 4) + 4; 
+let nextRandomTarget = Math.floor(Math.random() * 4) + 5; // 5~8
 
 function loadVoices() {
   const voices = speechSynthesis.getVoices();
@@ -795,6 +821,31 @@ function loadVoices() {
 }
 loadVoices();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
+
+// 발차 멜로디 (Web Audio API, 외부 의존성 없음)
+function playDepartureChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [
+      { freq: 659.25, time: 0,     duration: 0.16 },  // E5
+      { freq: 783.99, time: 0.16,  duration: 0.16 },  // G5
+      { freq: 1046.50, time: 0.32, duration: 0.32 }   // C6
+    ];
+    notes.forEach(n => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = n.freq;
+      const t0 = ctx.currentTime + n.time;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.18, t0 + 0.02);
+      gain.gain.linearRampToValueAtTime(0, t0 + n.duration);
+      osc.start(t0);
+      osc.stop(t0 + n.duration + 0.05);
+    });
+  } catch(_) { /* 오디오 컨텍스트 사용 불가 환경에서는 조용히 무시 */ }
+}
 
 // 영문 발음을 한국어 발음과 유사하게 자동 변환하는 내부 처리 함수 (TTS 전용)
 function getPhoneticEn(nameEn) {
@@ -887,7 +938,7 @@ async function playRandomAnnouncementIfNeeded() {
     await speakChunk({ text: msg, lang: 'ko-KR', voice: koreanVoice });
     
     stationPlayCount = 0;
-    nextRandomTarget = Math.floor(Math.random() * 4) + 4; 
+    nextRandomTarget = Math.floor(Math.random() * 4) + 5; // 5~8
     return true; 
   }
   return false;
@@ -936,28 +987,46 @@ async function startAutoRun() {
     // 역 정차
     currentStationIdx = idx; updateUI(); moveTrainTo(idx);
     
+    // 0. 랜덤 안내방송 (이번 역 안내 전으로 위치 이동 - 더 자연스러움)
+    const playedRandom = await playRandomAnnouncementIfNeeded();
+    if (autoCancel) break;
+    if (playedRandom) await new Promise(r => setTimeout(r, 500));
+    
     // 1. "이번 역은 ~" 안내방송
     setLedBoard(`이번 역은 ${line.stations[idx].name} 역입니다. This stop is ${line.stations[idx].nameEn}.`);
     await speakChain(buildAnnouncementChunks(line.stations[idx]));
     if (autoCancel) break;
     
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 800));
     
-    // 도착역(종착역)이면 종료
-    if (idx === endIdx) break;
+    // 도착역(종착역)이면 추가 안내 후 종료
+    if (idx === endIdx) {
+      const terminalKo = line.stations[idx].name;
+      const terminalEn = getPhoneticEn(line.stations[idx].nameEn);
+      setLedBoard(`이 열차의 종착역, ${terminalKo} 역입니다. 내리실 때 잊으신 물건 없는지 확인하시기 바랍니다.`);
+      await speakChunk({ 
+        text: `우리 열차의 종착역, ${terminalKo}. ${terminalKo} 역입니다. 내리실 때는 두고 내리시는 물건이 없는지 다시 한 번 확인하시기 바랍니다.`, 
+        lang: 'ko-KR', 
+        voice: koreanVoice 
+      });
+      if (autoCancel) break;
+      await speakChunk({ 
+        text: `This is the last stop on this train, ${terminalEn}. Please make sure you have all your belongings before leaving the train. Thank you for riding with us.`, 
+        lang: 'en-US', 
+        voice: englishVoice 
+      });
+      break;
+    }
     
-    // 2. 출발 전 "다음 역은 ~" 안내방송
+    // 2. 출발 멜로디 + 출입문 닫힘 안내
     setLedBoard('열차가 곧 출발합니다. 출입문 닫힙니다.');
-    await new Promise(r => setTimeout(r, 1200));
+    playDepartureChime();
+    await new Promise(r => setTimeout(r, 1100));
 
-    const playedRandom = await playRandomAnnouncementIfNeeded();
-    if (autoCancel) break;
-    if (playedRandom) await new Promise(r => setTimeout(r, 800));
-
+    // 3. "다음 역은 ~" 안내방송
     const nextStation = line.stations[idx + step];
     setLedBoard(`다음 역은 ${nextStation.name} 역입니다.`);
     
-    // 다음 역 안내도 한국어식 영어발음 로직 적용
     let spokenNextNameEn = getPhoneticEn(nextStation.nameEn);
     
     await speakChunk({ text: `다음 역은, ${nextStation.name}. ${nextStation.name} 역입니다.`, lang: 'ko-KR', voice: koreanVoice });
@@ -1012,19 +1081,32 @@ function setLedBoard(text) {
   textEl.innerHTML = text + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + text;
   board.classList.add('active');
 }
+
+// 노선 선택 드롭다운: optgroup으로 그룹화
 function renderLineSelect() {
   const sel = document.getElementById('lineSelect');
   sel.innerHTML = '';
-  // 경춘선 목록 추가
-  const lineOrder = ['1', '1_2', '2', '3', '4', '5', '5_2', '6', '7', '8', '9', '경의중앙', '경춘'];
-  lineOrder.forEach(k => {
-    if (!lineData[k]) return;
-    const opt = document.createElement('option');
-    opt.value = k; opt.textContent = lineData[k].name;
-    sel.appendChild(opt);
+  
+  const groups = [
+    { label: '서울 지하철 1~9호선', keys: ['1', '1_2', '2', '3', '4', '5', '5_2', '6', '7', '8', '9'] },
+    { label: '광역·수도권', keys: ['경의중앙', '경춘', '공항철도'] }
+  ];
+  
+  groups.forEach(g => {
+    const og = document.createElement('optgroup');
+    og.label = g.label;
+    g.keys.forEach(k => {
+      if (!lineData[k]) return;
+      const opt = document.createElement('option');
+      opt.value = k; 
+      opt.textContent = lineData[k].name;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
   });
   sel.value = currentLine;
 }
+
 function renderAutoSelects() {
   const line = lineData[currentLine];
   const start = document.getElementById('autoStart'), end = document.getElementById('autoEnd');
@@ -1085,9 +1167,27 @@ function createStationElement(station, idx, line) {
   if (station.transfers.length > 0) {
     const transfers = document.createElement('div'); transfers.className = 'transfers';
     station.transfers.forEach(t => {
-      const badge = document.createElement('span'); badge.className = 'transfer-badge';
+      const badge = document.createElement('span'); 
+      badge.className = 'transfer-badge';
       badge.textContent = /^\d$/.test(t) ? t : (TRANSFER_BADGE[t] || t);
       badge.style.background = TRANSFER_COLORS[t] || '#9ca3af';
+      
+      // 환승 뱃지 → 해당 노선 이동 (해당 노선이 존재할 때만 클릭 가능)
+      if (lineData[t]) {
+        badge.classList.add('clickable');
+        badge.title = `${TRANSFER_NAMES_KO[t] || t}로 이동`;
+        badge.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (autoMode || isPlaying) return; // 안내 중에는 무시
+          currentLine = t;
+          try { localStorage.setItem('lastLine', currentLine); } catch(_) {}
+          document.getElementById('lineSelect').value = currentLine;
+          stopAnnounce();
+          renderLine(currentLine);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+      
       transfers.appendChild(badge);
     });
     info.appendChild(transfers);
@@ -1099,7 +1199,12 @@ function createStationElement(station, idx, line) {
   return el;
 }
 
-document.getElementById('lineSelect').addEventListener('change', (e) => { currentLine = e.target.value; stopAnnounce(); renderLine(currentLine); });
+document.getElementById('lineSelect').addEventListener('change', (e) => { 
+  currentLine = e.target.value; 
+  try { localStorage.setItem('lastLine', currentLine); } catch(_) {}
+  stopAnnounce(); 
+  renderLine(currentLine); 
+});
 document.getElementById('speedSelect').addEventListener('change', (e) => { speechRate = parseFloat(e.target.value); });
 document.getElementById('stopBtn').addEventListener('click', stopAnnounce);
 document.getElementById('autoToggleBtn').addEventListener('click', () => { document.getElementById('autoPanel').classList.toggle('open'); });
