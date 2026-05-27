@@ -66,8 +66,8 @@
   .station-name-en { font-size: 12px; color: #6b7280; margin-top: 2px; }
   
   .transfers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-  .transfer-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 11px; font-weight: 700; color: white; transition: transform 0.1s; }
-  .transfer-badge.clickable { cursor: pointer; }
+  .transfer-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 30px; padding: 0 12px; border-radius: 15px; font-size: 13px; font-weight: 700; color: white; transition: transform 0.1s; }
+  .transfer-badge.clickable { cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
   .transfer-badge.clickable:active { transform: scale(0.9); }
   
   .play-icon { flex: 0 0 auto; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; font-size: 18px; }
@@ -128,6 +128,16 @@
 const TRANSFER_COLORS = { '1':'#0052A4','2':'#00A84D','3':'#EF7C1C','4':'#00A5DE','5':'#996CAC','6':'#CD7C2F','7':'#747F00','8':'#E6186C','9':'#BDB092','경의중앙':'#77C4A3','공항철도':'#0090D2','경춘':'#0C8E72','우이신설':'#B7C450','신림':'#6789CA','서해':'#8BC53F','인천1':'#7CA8D5','인천2':'#ED8B00','신분당':'#D4003B','수인분당':'#FABE00','GTX-A':'#9A6292' };
 const TRANSFER_NAMES_KO = { '1':'1호선','2':'2호선','3':'3호선','4':'4호선','5':'5호선','6':'6호선','7':'7호선','8':'8호선','9':'9호선','경의중앙':'경의중앙선','공항철도':'공항철도','경춘':'경춘선','우이신설':'우이신설선','신림':'신림선','서해':'서해선','인천1':'인천1호선','인천2':'인천2호선','신분당':'신분당선','수인분당':'수인분당선','GTX-A':'GTX-A' };
 const TRANSFER_BADGE = { '경의중앙':'경중','공항철도':'공항','경춘':'경춘','우이신설':'우이','신림':'신림','서해':'서해','인천1':'인1','인천2':'인2','신분당':'신분당','수인분당':'수분','GTX-A':'GTX' };
+
+// 한국어 TTS용 노선명 (숫자→한글로 변환하여 "칠.. 호선" 같은 갭 제거)
+const TRANSFER_NAMES_KO_TTS = { 
+  '1':'일호선','2':'이호선','3':'삼호선','4':'사호선','5':'오호선',
+  '6':'육호선','7':'칠호선','8':'팔호선','9':'구호선',
+  '경의중앙':'경의중앙선','공항철도':'공항철도','경춘':'경춘선',
+  '우이신설':'우이신설선','신림':'신림선','서해':'서해선',
+  '인천1':'인천일호선','인천2':'인천이호선',
+  '신분당':'신분당선','수인분당':'수인분당선','GTX-A':'지티엑스에이'
+};
 
 // 환승 안내용 영어 노선명 (the 제거됨)
 const TRANSFER_NAMES_EN_TTS = { 
@@ -822,28 +832,42 @@ function loadVoices() {
 loadVoices();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
 
+// 한국어 조사 '으로/로' 결정 (받침 유무에 따라)
+function getRoParticle(word) {
+  if (!word) return '로';
+  const last = word.charCodeAt(word.length - 1);
+  if (last >= 0xAC00 && last <= 0xD7A3) {
+    const jong = (last - 0xAC00) % 28;
+    // 받침 없음(0) 또는 ㄹ 받침(8) → '로', 그 외 → '으로'
+    return (jong === 0 || jong === 8) ? '로' : '으로';
+  }
+  // 영문/숫자 끝: 단순화하여 '로'
+  return '로';
+}
+
 // 발차 멜로디 (Web Audio API, 외부 의존성 없음)
 function playDepartureChime() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [
-      { freq: 659.25, time: 0,     duration: 0.16 },  // E5
-      { freq: 783.99, time: 0.16,  duration: 0.16 },  // G5
-      { freq: 1046.50, time: 0.32, duration: 0.32 }   // C6
-    ];
-    notes.forEach(n => {
+    const freq = 880;       // A5 - "띵" 톤
+    const beats = 5;        // 5회 반복
+    const interval = 0.14;  // 140ms 간격
+    const duration = 0.11;  // 비트당 110ms
+    
+    for (let i = 0; i < beats; i++) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
-      osc.frequency.value = n.freq;
-      const t0 = ctx.currentTime + n.time;
+      osc.frequency.value = freq;
+      
+      const t0 = ctx.currentTime + i * interval;
       gain.gain.setValueAtTime(0, t0);
-      gain.gain.linearRampToValueAtTime(0.18, t0 + 0.02);
-      gain.gain.linearRampToValueAtTime(0, t0 + n.duration);
+      gain.gain.linearRampToValueAtTime(0.18, t0 + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
       osc.start(t0);
-      osc.stop(t0 + n.duration + 0.05);
-    });
+      osc.stop(t0 + duration + 0.02);
+    }
   } catch(_) { /* 오디오 컨텍스트 사용 불가 환경에서는 조용히 무시 */ }
 }
 
@@ -882,8 +906,10 @@ function buildAnnouncementChunks(station) {
   // 한국어 방송 
   let koText;
   if (isTransfer) {
-    const tt = station.transfers.map(t => TRANSFER_NAMES_KO[t] || (t+'호선')).join(', ');
-    koText = `이번 역은, ${tt}으로 갈아타실 수 있는, ${station.name}. ${station.name} 역입니다.`;
+    const trList = station.transfers.map(t => TRANSFER_NAMES_KO_TTS[t] || (t+'호선'));
+    const tt = trList.join(', ');
+    const particle = getRoParticle(trList[trList.length - 1]);
+    koText = `이번 역은, ${tt}${particle} 갈아타실 수 있는, ${station.name}. ${station.name} 역입니다.`;
   } else {
     koText = `이번 역은, ${station.name}. ${station.name} 역입니다.`;
   }
@@ -897,6 +923,36 @@ function buildAnnouncementChunks(station) {
     const tt = station.transfers.map(t => TRANSFER_NAMES_EN_TTS[t] || t).join(', ');
     enText += ` You can transfer to, ${tt}.`;
   }
+  chunks.push({ text: enText, lang: 'en-US', voice: englishVoice });
+  
+  return chunks;
+}
+
+// 종착역 전용 안내문 (국문 + 영문, 일반 안내를 대체)
+function buildTerminalAnnouncementChunks(station) {
+  const chunks = [];
+  const isTransfer = station.transfers && station.transfers.length > 0;
+  
+  // 한국어
+  let koText;
+  if (isTransfer) {
+    const trList = station.transfers.map(t => TRANSFER_NAMES_KO_TTS[t] || (t+'호선'));
+    const tt = trList.join(', ');
+    const particle = getRoParticle(trList[trList.length - 1]);
+    koText = `이번 역은 우리 열차의 종착역인, ${tt}${particle} 갈아타실 수 있는, ${station.name}. ${station.name} 역입니다. 내리실 때 두고 내리시는 물건이 없는지 다시 한 번 확인하시기 바랍니다.`;
+  } else {
+    koText = `이번 역은 우리 열차의 종착역인, ${station.name}. ${station.name} 역입니다. 내리실 때 두고 내리시는 물건이 없는지 다시 한 번 확인하시기 바랍니다.`;
+  }
+  chunks.push({ text: koText, lang: 'ko-KR', voice: koreanVoice });
+  
+  // 영어
+  let spokenNameEn = getPhoneticEn(station.nameEn);
+  let enText = `This is the last stop, ${spokenNameEn}.`;
+  if (isTransfer) {
+    const tt = station.transfers.map(t => TRANSFER_NAMES_EN_TTS[t] || t).join(', ');
+    enText += ` You can transfer to, ${tt}.`;
+  }
+  enText += ` Please make sure you have all your belongings before leaving the train. Thank you for riding with us.`;
   chunks.push({ text: enText, lang: 'en-US', voice: englishVoice });
   
   return chunks;
@@ -987,41 +1043,30 @@ async function startAutoRun() {
     // 역 정차
     currentStationIdx = idx; updateUI(); moveTrainTo(idx);
     
-    // 0. 랜덤 안내방송 (이번 역 안내 전으로 위치 이동 - 더 자연스러움)
+    // 0. 랜덤 안내방송 (이번 역 안내 전)
     const playedRandom = await playRandomAnnouncementIfNeeded();
     if (autoCancel) break;
     if (playedRandom) await new Promise(r => setTimeout(r, 500));
     
-    // 1. "이번 역은 ~" 안내방송
+    // 1. 종착역이면 종착역 안내(국문+영문)만 재생하고 종료
+    if (idx === endIdx) {
+      setLedBoard(`이번 역은 우리 열차의 종착역, ${line.stations[idx].name} 역입니다. This is the last stop, ${line.stations[idx].nameEn}.`);
+      await speakChain(buildTerminalAnnouncementChunks(line.stations[idx]));
+      if (autoCancel) break;
+      break;
+    }
+    
+    // 일반 안내 (국문+영문)
     setLedBoard(`이번 역은 ${line.stations[idx].name} 역입니다. This stop is ${line.stations[idx].nameEn}.`);
     await speakChain(buildAnnouncementChunks(line.stations[idx]));
     if (autoCancel) break;
     
     await new Promise(r => setTimeout(r, 800));
     
-    // 도착역(종착역)이면 추가 안내 후 종료
-    if (idx === endIdx) {
-      const terminalKo = line.stations[idx].name;
-      const terminalEn = getPhoneticEn(line.stations[idx].nameEn);
-      setLedBoard(`이 열차의 종착역, ${terminalKo} 역입니다. 내리실 때 잊으신 물건 없는지 확인하시기 바랍니다.`);
-      await speakChunk({ 
-        text: `우리 열차의 종착역, ${terminalKo}. ${terminalKo} 역입니다. 내리실 때는 두고 내리시는 물건이 없는지 다시 한 번 확인하시기 바랍니다.`, 
-        lang: 'ko-KR', 
-        voice: koreanVoice 
-      });
-      if (autoCancel) break;
-      await speakChunk({ 
-        text: `This is the last stop on this train, ${terminalEn}. Please make sure you have all your belongings before leaving the train. Thank you for riding with us.`, 
-        lang: 'en-US', 
-        voice: englishVoice 
-      });
-      break;
-    }
-    
     // 2. 출발 멜로디 + 출입문 닫힘 안내
     setLedBoard('열차가 곧 출발합니다. 출입문 닫힙니다.');
     playDepartureChime();
-    await new Promise(r => setTimeout(r, 1100));
+    await new Promise(r => setTimeout(r, 1000));
 
     // 3. "다음 역은 ~" 안내방송
     const nextStation = line.stations[idx + step];
@@ -1179,12 +1224,22 @@ function createStationElement(station, idx, line) {
         badge.addEventListener('click', (e) => {
           e.stopPropagation();
           if (autoMode || isPlaying) return; // 안내 중에는 무시
+          const fromStationName = station.name; // 현재 역명 보존
           currentLine = t;
           try { localStorage.setItem('lastLine', currentLine); } catch(_) {}
           document.getElementById('lineSelect').value = currentLine;
           stopAnnounce();
           renderLine(currentLine);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          // 같은 역명이 새 노선에 있으면 그 역으로, 없으면 맨 위로
+          setTimeout(() => {
+            const targetLine = lineData[currentLine];
+            const targetIdx = targetLine.stations.findIndex(s => s.name === fromStationName);
+            if (targetIdx >= 0) {
+              const targetEl = Array.from(document.querySelectorAll('.station')).find(el => parseInt(el.dataset.idx) === targetIdx);
+              if (targetEl) { targetEl.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 150);
         });
       }
       
