@@ -12,7 +12,8 @@
   header { position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%); border-bottom: 1px solid #e5e7eb; padding: 12px 14px 0; }
   .header-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 12px; }
   .title { display: flex; align-items: center; gap: 10px; }
-  .line-badge { width: 36px; height: 36px; border-radius: 50%; background: var(--line-color, #CD7C2F); color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .line-badge { width: 36px; height: 36px; border-radius: 50%; background: var(--line-color, #CD7C2F); color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); position: relative; }
+  .line-badge .ridden-mark { position: absolute; top: -5px; right: -5px; background: #fbbf24; font-size: 10px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
   .title-text { font-size: 17px; font-weight: 700; }
   .subtitle { font-size: 12px; color: #6b7280; margin-top: 2px; }
   
@@ -75,6 +76,48 @@
   
   .loop-section { border: 2px dashed color-mix(in srgb, var(--line-color, #CD7C2F) 40%, white); border-radius: 16px; padding: 6px 0; margin-bottom: 8px; margin-left: -10px; padding-left: 10px; position: relative; }
   .loop-label { position: absolute; top: -10px; right: 16px; background: white; padding: 0 8px; font-size: 11px; font-weight: 700; color: var(--line-color, #CD7C2F); }
+  
+  /* 분기역 아이콘 */
+  .branch-icon { display: inline-block; margin-left: 6px; font-size: 15px; vertical-align: middle; }
+  
+  /* 퀴즈 모드 */
+  .quiz-container { padding: 20px; max-width: 500px; margin: 14px auto; background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: none; }
+  .quiz-container.active { display: block; }
+  .quiz-progress { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+  .quiz-question { font-size: 15px; color: #6b7280; margin-bottom: 12px; }
+  .quiz-station-name { font-size: 36px; font-weight: 800; color: #111827; text-align: center; padding: 22px 16px; background: #f4f6f8; border-radius: 12px; margin-bottom: 16px; word-break: keep-all; }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quiz-option { padding: 14px 10px; border: 2px solid #e5e7eb; border-radius: 12px; background: white; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; color: #111827; }
+  .quiz-option:active { transform: scale(0.97); }
+  .quiz-option.correct { background: #10b981; color: white; border-color: #10b981; }
+  .quiz-option.wrong { background: #ef4444; color: white; border-color: #ef4444; }
+  .quiz-option:disabled { cursor: not-allowed; opacity: 0.85; }
+  .quiz-line-badge { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; flex-shrink: 0; }
+  .quiz-feedback { margin-top: 14px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 15px; min-height: 22px; }
+  .quiz-feedback.correct { background: #d1fae5; color: #065f46; }
+  .quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
+  .quiz-result { text-align: center; padding: 24px 10px; }
+  .quiz-result-msg { font-size: 18px; color: #6b7280; }
+  .quiz-result-score { font-size: 56px; font-weight: 800; color: #111827; margin: 12px 0; }
+  .quiz-btn { padding: 12px 22px; background: #3b82f6; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin: 8px 4px 0; }
+  .quiz-btn.secondary { background: #6b7280; }
+  
+  /* 🎫 내 기록 모달 */
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: flex-start; justify-content: center; padding: 50px 16px 20px; overflow-y: auto; }
+  .modal-overlay.active { display: flex; }
+  .modal-content { background: white; border-radius: 16px; max-width: 420px; width: 100%; padding: 18px 20px 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px 10px; color: #6b7280; }
+  .modal-desc { font-size: 12.5px; color: #6b7280; margin-bottom: 14px; line-height: 1.55; }
+  .ridden-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid #f3f4f6; }
+  .ridden-row:last-child { border-bottom: none; }
+  .ridden-line-badge { width: 32px; height: 32px; border-radius: 50%; color: white; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ridden-line-name { flex: 1; font-size: 15px; font-weight: 600; color: #111827; }
+  .toggle-switch { position: relative; width: 48px; height: 26px; background: #d1d5db; border-radius: 13px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-switch.on { background: #10b981; }
+  .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .toggle-switch.on::after { left: 25px; }
 </style>
 </head>
 <body>
@@ -89,14 +132,9 @@
       </div>
     </div>
     <div class="controls">
-      <div class="speed-control"><span>속도</span>
-        <select id="speedSelect">
-          <option value="0.85">느리게</option>
-          <option value="1.0" selected>보통</option>
-          <option value="1.2">빠르게</option>
-        </select>
-      </div>
       <select class="line-select" id="lineSelect"></select>
+      <button class="icon-btn" id="riddenBtn" title="내가 탄 호선">🎫</button>
+      <button class="icon-btn" id="quizBtn">🎮 퀴즈</button>
       <button class="icon-btn" id="autoToggleBtn">🚂 자동운행</button>
       <button class="stop-btn" id="stopBtn">■ 정지</button>
     </div>
@@ -109,6 +147,12 @@
   <div class="auto-panel" id="autoPanel">
     <label>출발</label><select id="autoStart"></select>
     <label>도착</label><select id="autoEnd"></select>
+    <label>속도</label>
+    <select id="speedSelect">
+      <option value="0.85">느리게</option>
+      <option value="1.0" selected>보통</option>
+      <option value="1.2">빠르게</option>
+    </select>
     <button class="icon-btn primary" id="autoPlayBtn">▶ 출발</button>
     <div class="hint">기차가 자동으로 역마다 멈추며 안내방송을 합니다.</div>
   </div>
@@ -120,8 +164,20 @@
     🔄 <b>환승 뱃지 탭</b>: 해당 노선으로 바로 이동 (안내 중에는 비활성)<br>
     🚂 <b>자동운행</b>: 출발/도착역을 고르면 기차가 역마다 이동해요
   </div>
+  <div class="quiz-container" id="quizContainer"></div>
   <div class="map" id="map"><div class="train-icon" id="trainIcon"></div></div>
 </main>
+
+<div class="modal-overlay" id="riddenModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">🎫 내가 탄 호선</div>
+      <button class="modal-close" id="riddenModalClose">✕</button>
+    </div>
+    <div class="modal-desc">실제로 타본 호선을 켜주세요. 켠 호선은 화면 좌측 상단 동그라미에 ⭐ 별표로 표시되고, 노선 선택 목록에도 🎫이 붙어요.</div>
+    <div id="riddenList"></div>
+  </div>
+</div>
 
 <script>
 // 환승 뱃지 표시용
@@ -489,7 +545,7 @@ const lineData = {
   { name:'아차산', nameEn:'Achasan', transfers:[] },
   { name:'광나루', nameEn:'Gwangnaru', transfers:[] },
   { name:'천호', nameEn:'Cheonho', transfers:['8'] },
-  { name:'강동', nameEn:'Gangdong', transfers:[] },
+  { name:'강동', nameEn:'Gangdong', transfers:[], branchKo:'마천 방면으로 가실 분들은 이번 역에서 열차를 갈아타 주시기 바랍니다.', branchEn:'Passengers heading to Macheon, please change trains at this station.' },
   { name:'길동', nameEn:'Gil-dong', transfers:[] },
   { name:'굽은다리', nameEn:'Gubeundari', transfers:[] },
   { name:'명일', nameEn:'Myeongil', transfers:[] },
@@ -540,7 +596,7 @@ const lineData = {
   { name:'아차산', nameEn:'Achasan', transfers:[] },
   { name:'광나루', nameEn:'Gwangnaru', transfers:[] },
   { name:'천호', nameEn:'Cheonho', transfers:['8'] },
-  { name:'강동', nameEn:'Gangdong', transfers:[] },
+  { name:'강동', nameEn:'Gangdong', transfers:[], branchKo:'하남검단산 방면으로 가실 분들은 이번 역에서 열차를 갈아타 주시기 바랍니다.', branchEn:'Passengers heading to Hanam Geomdansan, please change trains at this station.' },
   { name:'둔촌동', nameEn:'Dunchon-dong', transfers:[] },
   { name:'올림픽공원', nameEn:'Olympic Park', transfers:['9'] },
   { name:'방이', nameEn:'Bangi', transfers:[] },
@@ -824,6 +880,30 @@ let koreanVoice = null, englishVoice = null, autoMode = false, autoCancel = fals
 let stationPlayCount = 0;
 let nextRandomTarget = Math.floor(Math.random() * 4) + 5; // 5~8
 
+// 노선 완주 카운트 (자동운행으로 첫 역↔끝 역 완주 시 누적, 내부 데이터만 유지)
+let lineCompletions = {};
+try {
+  const saved = localStorage.getItem('lineCompletions');
+  if (saved) lineCompletions = JSON.parse(saved);
+} catch(_) {}
+
+// 실제 타본 호선 (사용자가 모달에서 체크)
+let riddenLines = [];
+try {
+  const saved = localStorage.getItem('riddenLines');
+  if (saved) riddenLines = JSON.parse(saved);
+} catch(_) {}
+
+// 호선 단위로 통합 (1호선 인천행/신창행, 5호선 하남행/마천행은 같은 호선)
+function getBaseLineKey(key) {
+  if (key === '1_2') return '1';
+  if (key === '5_2') return '5';
+  return key;
+}
+
+// 퀴즈 상태
+let quizState = null;
+
 function loadVoices() {
   const voices = speechSynthesis.getVoices();
   koreanVoice = voices.find(v => v.lang === 'ko-KR' && /female|여성|Yuna|Heami/i.test(v.name)) || voices.find(v => v.lang === 'ko-KR');
@@ -913,6 +993,10 @@ function buildAnnouncementChunks(station) {
   } else {
     koText = `이번 역은, ${station.name}. ${station.name} 역입니다.`;
   }
+  // 분기 안내 (예: 5호선 강동역에서 마천/하남검단산 방면 갈아타기 안내)
+  if (station.branchKo) {
+    koText += ` ${station.branchKo}`;
+  }
   chunks.push({ text: koText, lang: 'ko-KR', voice: koreanVoice });
   
   // 영어 방송 (화면 스펠링과 무관하게 TTS용 한국어 발음 교정 적용)
@@ -922,6 +1006,10 @@ function buildAnnouncementChunks(station) {
   if (isTransfer) {
     const tt = station.transfers.map(t => TRANSFER_NAMES_EN_TTS[t] || t).join(', ');
     enText += ` You can transfer to, ${tt}.`;
+  }
+  // 분기 안내 영문
+  if (station.branchEn) {
+    enText += ` ${station.branchEn}`;
   }
   chunks.push({ text: enText, lang: 'en-US', voice: englishVoice });
   
@@ -1095,6 +1183,14 @@ async function startAutoRun() {
   if (!autoCancel) {
     const isRealTerminal = (idx === 0 || idx === line.stations.length - 1);
     if (isRealTerminal) {
+      // 완주 카운트 조건: 시작도 반대 끝이어야 진짜 완주
+      const opposite = (idx === 0) ? line.stations.length - 1 : 0;
+      if (startIdx === opposite) {
+        const baseKey = getBaseLineKey(currentLine);
+        lineCompletions[baseKey] = (lineCompletions[baseKey] || 0) + 1;
+        try { localStorage.setItem('lineCompletions', JSON.stringify(lineCompletions)); } catch(_) {}
+        renderLineSelect();
+      }
       setLedBoard('종착역에 도착했습니다. 안녕히 가십시오.');
     } else {
       setLedBoard(`${line.stations[idx].name} 역에 도착했습니다. 안녕히 가십시오.`);
@@ -1140,7 +1236,7 @@ function setLedBoard(text) {
   board.classList.add('active');
 }
 
-// 노선 선택 드롭다운: optgroup으로 그룹화
+// 노선 선택 드롭다운: optgroup으로 그룹화 + 탑승 호선 🎫 표시
 function renderLineSelect() {
   const sel = document.getElementById('lineSelect');
   sel.innerHTML = '';
@@ -1157,7 +1253,9 @@ function renderLineSelect() {
       if (!lineData[k]) return;
       const opt = document.createElement('option');
       opt.value = k; 
-      opt.textContent = lineData[k].name;
+      const baseKey = getBaseLineKey(k);
+      const isRidden = riddenLines.includes(baseKey);
+      opt.textContent = lineData[k].name + (isRidden ? ' 🎫' : '');
       og.appendChild(opt);
     });
     sel.appendChild(og);
@@ -1179,8 +1277,7 @@ function renderLine(lineKey) {
   const line = lineData[lineKey];
   document.documentElement.style.setProperty('--line-color', line.color);
   document.querySelector('header').style.setProperty('--line-color', line.color);
-  document.getElementById('lineBadge').textContent = line.badge;
-  document.getElementById('lineBadge').style.background = line.color;
+  renderLineBadge();
   document.getElementById('autoPlayBtn').style.background = line.color;
   document.getElementById('subtitle').textContent = line.name + ' · ' + line.stations.length + '개 역';
   const map = document.getElementById('map');
@@ -1219,6 +1316,14 @@ function createStationElement(station, idx, line) {
   el.appendChild(dot);
   const info = document.createElement('div'); info.className = 'station-info';
   const nameKo = document.createElement('div'); nameKo.className = 'station-name-ko'; nameKo.textContent = station.name;
+  // 분기역 표시 (🔀)
+  if (station.branchKo) {
+    const branchIcon = document.createElement('span');
+    branchIcon.className = 'branch-icon';
+    branchIcon.textContent = '🔀';
+    branchIcon.title = '분기역';
+    nameKo.appendChild(branchIcon);
+  }
   info.appendChild(nameKo);
   const nameEn = document.createElement('div'); nameEn.className = 'station-name-en'; nameEn.textContent = station.nameEn;
   info.appendChild(nameEn);
@@ -1277,6 +1382,224 @@ document.getElementById('speedSelect').addEventListener('change', (e) => { speec
 document.getElementById('stopBtn').addEventListener('click', stopAnnounce);
 document.getElementById('autoToggleBtn').addEventListener('click', () => { document.getElementById('autoPanel').classList.toggle('open'); });
 document.getElementById('autoPlayBtn').addEventListener('click', () => { startAutoRun(); });
+
+// === 퀴즈 모드 ===
+function startQuiz() {
+  if (autoMode || isPlaying) {
+    alert('안내방송 중에는 퀴즈를 시작할 수 없어요!');
+    return;
+  }
+  stopAnnounce();
+  quizState = {
+    questions: generateQuizQuestions(5),
+    currentIdx: 0,
+    score: 0
+  };
+  showQuizScreen();
+  renderCurrentQuestion();
+}
+
+function generateQuizQuestions(n) {
+  const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
+  const subMap = { '1':['1','1_2'], '5':['5','5_2'] };
+  
+  // 역명별로 속한 base 노선 집합 (환승 노선도 정답 풀에 포함 - 관대한 채점)
+  const stationLines = {};
+  baseLines.forEach(b => {
+    const subs = subMap[b] || [b];
+    subs.forEach(k => {
+      if (!lineData[k]) return;
+      lineData[k].stations.forEach(s => {
+        if (!stationLines[s.name]) stationLines[s.name] = new Set();
+        stationLines[s.name].add(b);
+        s.transfers.forEach(t => {
+          if (baseLines.includes(t)) stationLines[s.name].add(t);
+        });
+      });
+    });
+  });
+  
+  const stationNames = Object.keys(stationLines);
+  const shuffled = [...stationNames].sort(() => Math.random() - 0.5);
+  
+  return shuffled.slice(0, n).map(name => {
+    const correctLines = [...stationLines[name]];
+    const display = correctLines[Math.floor(Math.random() * correctLines.length)];
+    const wrongPool = baseLines.filter(b => !correctLines.includes(b));
+    const wrongs = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
+    const options = [...wrongs, display].sort(() => Math.random() - 0.5);
+    return { stationName: name, displayCorrect: display, options, acceptedAnswers: correctLines };
+  });
+}
+
+function showQuizScreen() {
+  document.getElementById('quizContainer').classList.add('active');
+  document.getElementById('map').style.display = 'none';
+  document.querySelector('.helper').style.display = 'none';
+}
+
+function hideQuizScreen() {
+  document.getElementById('quizContainer').classList.remove('active');
+  document.getElementById('map').style.display = '';
+  document.querySelector('.helper').style.display = '';
+  quizState = null;
+}
+
+function renderCurrentQuestion() {
+  const quiz = document.getElementById('quizContainer');
+  if (quizState.currentIdx >= quizState.questions.length) {
+    renderQuizResult();
+    return;
+  }
+  const q = quizState.questions[quizState.currentIdx];
+  
+  quiz.innerHTML = `
+    <div class="quiz-progress">문제 ${quizState.currentIdx + 1} / ${quizState.questions.length}  ·  맞힘 ${quizState.score}개</div>
+    <div class="quiz-question">이 역은 어느 노선일까요?</div>
+    <div class="quiz-station-name">${q.stationName}</div>
+    <div class="quiz-options">
+      ${q.options.map(opt => `
+        <button class="quiz-option" data-option="${opt}">
+          <span class="quiz-line-badge" style="background:${TRANSFER_COLORS[opt]||'#9ca3af'}">${/^\d$/.test(opt) ? opt : (TRANSFER_BADGE[opt] || opt)}</span>
+          ${TRANSFER_NAMES_KO[opt] || opt}
+        </button>
+      `).join('')}
+    </div>
+    <div class="quiz-feedback" id="quizFeedback">&nbsp;</div>
+  `;
+  
+  quiz.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => handleQuizAnswer(btn));
+  });
+}
+
+function handleQuizAnswer(btn) {
+  const q = quizState.questions[quizState.currentIdx];
+  const selected = btn.dataset.option;
+  const isCorrect = q.acceptedAnswers.includes(selected);
+  
+  document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+  const feedback = document.getElementById('quizFeedback');
+  
+  if (isCorrect) {
+    btn.classList.add('correct');
+    quizState.score++;
+    feedback.className = 'quiz-feedback correct';
+    feedback.textContent = '✅ 정답이에요!';
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.quiz-option').forEach(b => {
+      if (q.acceptedAnswers.includes(b.dataset.option)) b.classList.add('correct');
+    });
+    feedback.className = 'quiz-feedback wrong';
+    feedback.textContent = `❌ 아쉬워요! 정답은 ${TRANSFER_NAMES_KO[q.displayCorrect] || q.displayCorrect}이에요`;
+  }
+  
+  setTimeout(() => {
+    quizState.currentIdx++;
+    renderCurrentQuestion();
+  }, 1800);
+}
+
+function renderQuizResult() {
+  const quiz = document.getElementById('quizContainer');
+  const total = quizState.questions.length;
+  const score = quizState.score;
+  let msg;
+  if (score === total) msg = '🎉 완벽해요!';
+  else if (score >= Math.ceil(total * 0.6)) msg = '👍 잘했어요!';
+  else if (score >= Math.ceil(total * 0.3)) msg = '🚇 거의 다 왔어요!';
+  else msg = '💪 다시 도전해볼까요?';
+  
+  quiz.innerHTML = `
+    <div class="quiz-result">
+      <div class="quiz-result-msg">${msg}</div>
+      <div class="quiz-result-score">${score} / ${total}</div>
+      <button class="quiz-btn" id="quizRestart">다시 도전</button>
+      <button class="quiz-btn secondary" id="quizExit">처음으로</button>
+    </div>
+  `;
+  
+  document.getElementById('quizRestart').addEventListener('click', startQuiz);
+  document.getElementById('quizExit').addEventListener('click', hideQuizScreen);
+}
+
+document.getElementById('quizBtn').addEventListener('click', () => {
+  if (quizState) {
+    hideQuizScreen();
+  } else {
+    startQuiz();
+  }
+});
+
+// === 🎫 내 기록 (실제 타본 호선) ===
+function renderLineBadge() {
+  const line = lineData[currentLine];
+  const badge = document.getElementById('lineBadge');
+  badge.textContent = line.badge;
+  badge.style.background = line.color;
+  const baseKey = getBaseLineKey(currentLine);
+  if (riddenLines.includes(baseKey)) {
+    const mark = document.createElement('span');
+    mark.className = 'ridden-mark';
+    mark.textContent = '⭐';
+    badge.appendChild(mark);
+  }
+}
+
+function openRiddenModal() {
+  if (autoMode || isPlaying) {
+    alert('안내방송 중에는 사용할 수 없어요!');
+    return;
+  }
+  document.getElementById('riddenModal').classList.add('active');
+  renderRiddenList();
+}
+
+function closeRiddenModal() {
+  document.getElementById('riddenModal').classList.remove('active');
+}
+
+function renderRiddenList() {
+  const list = document.getElementById('riddenList');
+  const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
+  const baseLineNames = {
+    '1':'1호선', '2':'2호선', '3':'3호선', '4':'4호선', '5':'5호선',
+    '6':'6호선', '7':'7호선', '8':'8호선', '9':'9호선',
+    '경의중앙':'경의중앙선', '경춘':'경춘선', '공항철도':'공항철도'
+  };
+  
+  list.innerHTML = baseLines.map(b => `
+    <div class="ridden-row">
+      <div class="ridden-line-badge" style="background:${TRANSFER_COLORS[b]}">${/^\d$/.test(b) ? b : (TRANSFER_BADGE[b] || b)}</div>
+      <div class="ridden-line-name">${baseLineNames[b]}</div>
+      <div class="toggle-switch ${riddenLines.includes(b) ? 'on' : ''}" data-line="${b}"></div>
+    </div>
+  `).join('');
+  
+  list.querySelectorAll('.toggle-switch').forEach(t => {
+    t.addEventListener('click', () => {
+      const lineKey = t.dataset.line;
+      if (riddenLines.includes(lineKey)) {
+        riddenLines = riddenLines.filter(x => x !== lineKey);
+        t.classList.remove('on');
+      } else {
+        riddenLines.push(lineKey);
+        t.classList.add('on');
+      }
+      try { localStorage.setItem('riddenLines', JSON.stringify(riddenLines)); } catch(_) {}
+      // 헤더 line-badge와 노선 드롭다운 즉시 갱신
+      renderLineBadge();
+      renderLineSelect();
+    });
+  });
+}
+
+document.getElementById('riddenBtn').addEventListener('click', openRiddenModal);
+document.getElementById('riddenModalClose').addEventListener('click', closeRiddenModal);
+document.getElementById('riddenModal').addEventListener('click', (e) => {
+  if (e.target.id === 'riddenModal') closeRiddenModal();
+});
 
 renderLineSelect();
 renderLine(currentLine);
