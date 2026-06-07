@@ -1467,23 +1467,17 @@ function genModeTransferOut() {
 }
 
 // 모드 3: 노선 종착역 ("○호선의 마지막 역은?")
+// 분기 노선(1·5호선: 노선명에 행선지=답이 노출)과 순환 노선(2호선) 제외
 function genModeTerminal() {
-  const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
-  const subMap = { '1':['1','1_2'], '5':['5','5_2'] };
-  // 출제할 노선 (sub 노선도 따로 - 1호선 인천행/신창행 종착역 다름)
-  const candidates = [];
-  baseLines.forEach(b => {
-    const subs = subMap[b] || [b];
-    subs.forEach(k => { if (lineData[k]) candidates.push(k); });
-  });
-  const lineKey = candidates[Math.floor(Math.random() * candidates.length)];
+  const eligibleLines = ['3', '4', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
+  const lineKey = eligibleLines[Math.floor(Math.random() * eligibleLines.length)];
   const stations = lineData[lineKey].stations;
   const isFirst = Math.random() < 0.5;
   const correctStation = isFirst ? stations[0].name : stations[stations.length - 1].name;
   const direction = isFirst ? '첫' : '마지막';
   // 다른 노선의 종착역들을 오답 풀로
   const allTerminals = new Set();
-  candidates.forEach(k => {
+  eligibleLines.forEach(k => {
     const s = lineData[k].stations;
     allTerminals.add(s[0].name);
     allTerminals.add(s[s.length - 1].name);
@@ -1491,8 +1485,7 @@ function genModeTerminal() {
   allTerminals.delete(correctStation);
   const wrongs = [...allTerminals].sort(() => Math.random() - 0.5).slice(0, 3);
   const options = [...wrongs, correctStation].sort(() => Math.random() - 0.5);
-  const baseKey = getBaseLineKey(lineKey);
-  return { mode: 'terminal', lineKey: baseKey, lineName: lineData[lineKey].name, direction, options, acceptedAnswers: [correctStation] };
+  return { mode: 'terminal', lineKey, lineName: lineData[lineKey].name, direction, options, acceptedAnswers: [correctStation] };
 }
 
 // 모드 4: 색깔 → 호선 ("이 색은 어느 호선?")
