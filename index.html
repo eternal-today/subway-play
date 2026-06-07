@@ -86,6 +86,8 @@
   .quiz-progress { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
   .quiz-question { font-size: 15px; color: #6b7280; margin-bottom: 12px; }
   .quiz-station-name { font-size: 36px; font-weight: 800; color: #111827; text-align: center; padding: 22px 16px; background: #f4f6f8; border-radius: 12px; margin-bottom: 16px; word-break: keep-all; }
+  .quiz-color-box { width: 100%; height: 110px; border-radius: 12px; margin-bottom: 16px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.15); }
+  .quiz-line-badge-big { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; color: white; font-weight: 800; font-size: 17px; margin-right: 10px; vertical-align: middle; }
   .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .quiz-option { padding: 14px 10px; border: 2px solid #e5e7eb; border-radius: 12px; background: white; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; color: #111827; }
   .quiz-option:active { transform: scale(0.97); }
@@ -1400,36 +1402,107 @@ function startQuiz() {
 }
 
 function generateQuizQuestions(n) {
+  const generators = [genModeTransferIn, genModeTransferOut, genModeTerminal, genModeColor];
+  const questions = [];
+  let attempts = 0;
+  while (questions.length < n && attempts < n * 4) {
+    const gen = generators[Math.floor(Math.random() * generators.length)];
+    const q = gen();
+    if (q) questions.push(q);
+    attempts++;
+  }
+  return questions;
+}
+
+// 공통: 역명 → 환승 가능한 base 노선 집합
+function buildStationLinesMap() {
   const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
   const subMap = { '1':['1','1_2'], '5':['5','5_2'] };
-  
-  // 역명별로 속한 base 노선 집합 (환승 노선도 정답 풀에 포함 - 관대한 채점)
-  const stationLines = {};
+  const map = {};
   baseLines.forEach(b => {
     const subs = subMap[b] || [b];
     subs.forEach(k => {
       if (!lineData[k]) return;
       lineData[k].stations.forEach(s => {
-        if (!stationLines[s.name]) stationLines[s.name] = new Set();
-        stationLines[s.name].add(b);
+        if (!map[s.name]) map[s.name] = new Set();
+        map[s.name].add(b);
         s.transfers.forEach(t => {
-          if (baseLines.includes(t)) stationLines[s.name].add(t);
+          if (baseLines.includes(t)) map[s.name].add(t);
         });
       });
     });
   });
-  
-  const stationNames = Object.keys(stationLines);
-  const shuffled = [...stationNames].sort(() => Math.random() - 0.5);
-  
-  return shuffled.slice(0, n).map(name => {
-    const correctLines = [...stationLines[name]];
-    const display = correctLines[Math.floor(Math.random() * correctLines.length)];
-    const wrongPool = baseLines.filter(b => !correctLines.includes(b));
-    const wrongs = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
-    const options = [...wrongs, display].sort(() => Math.random() - 0.5);
-    return { stationName: name, displayCorrect: display, options, acceptedAnswers: correctLines };
+  return { map, baseLines };
+}
+
+// 모드 1: 환승 가능 호선 ("이 역은 어느 노선?")
+function genModeTransferIn() {
+  const { map, baseLines } = buildStationLinesMap();
+  const stationNames = Object.keys(map);
+  const name = stationNames[Math.floor(Math.random() * stationNames.length)];
+  const correctLines = [...map[name]];
+  const display = correctLines[Math.floor(Math.random() * correctLines.length)];
+  const wrongPool = baseLines.filter(b => !correctLines.includes(b));
+  const wrongs = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [...wrongs, display].sort(() => Math.random() - 0.5);
+  return { mode: 'transfer-in', stationName: name, displayCorrect: display, options, acceptedAnswers: correctLines };
+}
+
+// 모드 2: 환승 불가 호선 ("이 역에서 갈아탈 수 없는 호선은?")
+function genModeTransferOut() {
+  const { map, baseLines } = buildStationLinesMap();
+  // 환승 호선 3개 이상인 역만 출제 (해당 역의 base 노선 + 환승 = 3+)
+  const eligible = Object.keys(map).filter(n => map[n].size >= 3);
+  if (eligible.length === 0) return null;
+  const name = eligible[Math.floor(Math.random() * eligible.length)];
+  const transferable = [...map[name]];
+  // 환승 가능 3개를 옵션으로
+  const valid3 = transferable.sort(() => Math.random() - 0.5).slice(0, 3);
+  // 환승 불가 1개를 정답으로
+  const wrongPool = baseLines.filter(b => !transferable.includes(b));
+  if (wrongPool.length === 0) return null;
+  const correctAnswer = wrongPool[Math.floor(Math.random() * wrongPool.length)];
+  const options = [...valid3, correctAnswer].sort(() => Math.random() - 0.5);
+  return { mode: 'transfer-out', stationName: name, options, acceptedAnswers: [correctAnswer] };
+}
+
+// 모드 3: 노선 종착역 ("○호선의 마지막 역은?")
+function genModeTerminal() {
+  const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
+  const subMap = { '1':['1','1_2'], '5':['5','5_2'] };
+  // 출제할 노선 (sub 노선도 따로 - 1호선 인천행/신창행 종착역 다름)
+  const candidates = [];
+  baseLines.forEach(b => {
+    const subs = subMap[b] || [b];
+    subs.forEach(k => { if (lineData[k]) candidates.push(k); });
   });
+  const lineKey = candidates[Math.floor(Math.random() * candidates.length)];
+  const stations = lineData[lineKey].stations;
+  const isFirst = Math.random() < 0.5;
+  const correctStation = isFirst ? stations[0].name : stations[stations.length - 1].name;
+  const direction = isFirst ? '첫' : '마지막';
+  // 다른 노선의 종착역들을 오답 풀로
+  const allTerminals = new Set();
+  candidates.forEach(k => {
+    const s = lineData[k].stations;
+    allTerminals.add(s[0].name);
+    allTerminals.add(s[s.length - 1].name);
+  });
+  allTerminals.delete(correctStation);
+  const wrongs = [...allTerminals].sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [...wrongs, correctStation].sort(() => Math.random() - 0.5);
+  const baseKey = getBaseLineKey(lineKey);
+  return { mode: 'terminal', lineKey: baseKey, lineName: lineData[lineKey].name, direction, options, acceptedAnswers: [correctStation] };
+}
+
+// 모드 4: 색깔 → 호선 ("이 색은 어느 호선?")
+function genModeColor() {
+  const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
+  const correctLine = baseLines[Math.floor(Math.random() * baseLines.length)];
+  const color = TRANSFER_COLORS[correctLine];
+  const wrongs = baseLines.filter(b => b !== correctLine).sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [...wrongs, correctLine].sort(() => Math.random() - 0.5);
+  return { mode: 'color', color, options, acceptedAnswers: [correctLine] };
 }
 
 function showQuizScreen() {
@@ -1453,17 +1526,54 @@ function renderCurrentQuestion() {
   }
   const q = quizState.questions[quizState.currentIdx];
   
+  // 모드별 질문 영역 HTML
+  let questionHTML = '';
+  if (q.mode === 'transfer-in') {
+    questionHTML = `
+      <div class="quiz-question">이 역은 어느 노선일까요?</div>
+      <div class="quiz-station-name">${q.stationName}</div>
+    `;
+  } else if (q.mode === 'transfer-out') {
+    questionHTML = `
+      <div class="quiz-question">이 역에서 갈아탈 수 <b>없는</b> 호선은?</div>
+      <div class="quiz-station-name">${q.stationName}</div>
+    `;
+  } else if (q.mode === 'terminal') {
+    const badgeColor = TRANSFER_COLORS[q.lineKey] || '#9ca3af';
+    const badgeText = /^\d$/.test(q.lineKey) ? q.lineKey : (TRANSFER_BADGE[q.lineKey] || q.lineKey);
+    questionHTML = `
+      <div class="quiz-question">이 노선의 <b>${q.direction} 역</b>은?</div>
+      <div class="quiz-station-name" style="font-size:24px;">
+        <span class="quiz-line-badge-big" style="background:${badgeColor}">${badgeText}</span>${q.lineName}
+      </div>
+    `;
+  } else if (q.mode === 'color') {
+    questionHTML = `
+      <div class="quiz-question">이 색은 어느 호선?</div>
+      <div class="quiz-color-box" style="background:${q.color}"></div>
+    `;
+  }
+  
+  // 모드별 옵션 영역 HTML (모드 3은 역명 텍스트, 나머지는 호선 뱃지)
+  let optionsHTML;
+  if (q.mode === 'terminal') {
+    optionsHTML = q.options.map(opt => `
+      <button class="quiz-option" data-option="${opt}">${opt}</button>
+    `).join('');
+  } else {
+    optionsHTML = q.options.map(opt => `
+      <button class="quiz-option" data-option="${opt}">
+        <span class="quiz-line-badge" style="background:${TRANSFER_COLORS[opt]||'#9ca3af'}">${/^\d$/.test(opt) ? opt : (TRANSFER_BADGE[opt] || opt)}</span>
+        ${TRANSFER_NAMES_KO[opt] || opt}
+      </button>
+    `).join('');
+  }
+  
   quiz.innerHTML = `
     <div class="quiz-progress">문제 ${quizState.currentIdx + 1} / ${quizState.questions.length}  ·  맞힘 ${quizState.score}개</div>
-    <div class="quiz-question">이 역은 어느 노선일까요?</div>
-    <div class="quiz-station-name">${q.stationName}</div>
+    ${questionHTML}
     <div class="quiz-options">
-      ${q.options.map(opt => `
-        <button class="quiz-option" data-option="${opt}">
-          <span class="quiz-line-badge" style="background:${TRANSFER_COLORS[opt]||'#9ca3af'}">${/^\d$/.test(opt) ? opt : (TRANSFER_BADGE[opt] || opt)}</span>
-          ${TRANSFER_NAMES_KO[opt] || opt}
-        </button>
-      `).join('')}
+      ${optionsHTML}
     </div>
     <div class="quiz-feedback" id="quizFeedback">&nbsp;</div>
   `;
@@ -1481,6 +1591,13 @@ function handleQuizAnswer(btn) {
   document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
   const feedback = document.getElementById('quizFeedback');
   
+  // 모드별 정답 라벨
+  function getCorrectLabel() {
+    if (q.mode === 'terminal') return q.acceptedAnswers[0] + ' 역';
+    const ans = q.mode === 'transfer-in' ? q.displayCorrect : q.acceptedAnswers[0];
+    return TRANSFER_NAMES_KO[ans] || ans;
+  }
+  
   if (isCorrect) {
     btn.classList.add('correct');
     quizState.score++;
@@ -1492,7 +1609,7 @@ function handleQuizAnswer(btn) {
       if (q.acceptedAnswers.includes(b.dataset.option)) b.classList.add('correct');
     });
     feedback.className = 'quiz-feedback wrong';
-    feedback.textContent = `❌ 아쉬워요! 정답은 ${TRANSFER_NAMES_KO[q.displayCorrect] || q.displayCorrect}이에요`;
+    feedback.textContent = `❌ 아쉬워요! 정답은 ${getCorrectLabel()}이에요`;
   }
   
   setTimeout(() => {
