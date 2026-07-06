@@ -1165,26 +1165,36 @@ function renderChosungQuestion() {
   quiz.innerHTML = `
     <div class="quiz-progress">문제 ${chosungState.currentIdx + 1} / ${chosungState.questions.length}  ·  맞힘 ${chosungState.score}개</div>
     <div class="chosung-display">${q.chosung}</div>
-    <div class="chosung-hints">${hintsHTML}</div>
-    ${moreHintBtn}
     <div class="chosung-input-row">
       <input class="chosung-input" id="chosungInput" type="text" placeholder="역 이름을 입력하세요" autocomplete="off" />
       <button class="chosung-submit" id="chosungSubmit">확인</button>
     </div>
     <div class="quiz-feedback" id="chosungFeedback">&nbsp;</div>
+    <div class="chosung-hints">${hintsHTML}</div>
+    ${moreHintBtn}
     <button class="chosung-skip" id="chosungSkip">모르겠어요, 넘어갈래요</button>
   `;
   
   const input = document.getElementById('chosungInput');
-  input.focus();
+  // 자동 포커스 제거: 아이가 입력창을 탭할 때만 키보드가 올라옴
+  // 포커스 시 초성+입력창이 화면 상단에 오도록 스크롤 (키보드 가림 대응)
+  input.addEventListener('focus', () => {
+    setTimeout(() => {
+      const disp = quiz.querySelector('.chosung-display');
+      if (disp) disp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300); // 키보드 애니메이션 후 스크롤
+  });
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitChosungAnswer(); });
   document.getElementById('chosungSubmit').addEventListener('click', submitChosungAnswer);
   document.getElementById('chosungSkip').addEventListener('click', () => revealChosungAnswer(false));
   const moreBtn = document.getElementById('chosungMoreHint');
   if (moreBtn) moreBtn.addEventListener('click', () => {
+    // 재렌더링 전에 입력값 보존 (포커스는 복귀시키지 않아 키보드가 뜨지 않음)
+    const keep = document.getElementById('chosungInput').value;
     chosungState.hintsShown++;
     renderChosungQuestion();
-    // 힌트 더 보기 후에도 입력값 유지되도록 포커스만 복귀
+    const inp = document.getElementById('chosungInput');
+    if (inp) inp.value = keep;
   });
 }
 
