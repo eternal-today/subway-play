@@ -2,1352 +2,178 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>지하철 놀이 🚇</title>
-<style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; background: #f4f6f8; color: #222; overscroll-behavior: none; }
-  
-  /* Header UI */
-  header { position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%); border-bottom: 1px solid #e5e7eb; padding: 12px 14px 0; }
-  .header-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 12px; }
-  .title { display: flex; align-items: center; gap: 10px; }
-  .line-badge { width: 36px; height: 36px; border-radius: 50%; background: var(--line-color, #CD7C2F); color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); position: relative; }
-  .line-badge .ridden-mark { position: absolute; top: -5px; right: -5px; background: #fbbf24; font-size: 10px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
-  .title-text { font-size: 17px; font-weight: 700; }
-  .subtitle { font-size: 12px; color: #6b7280; margin-top: 2px; }
-  
-  /* Controls */
-  .controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .line-select { padding: 7px 10px; border-radius: 10px; border: 1px solid #d1d5db; background: white; font-size: 14px; font-weight: 600; }
-  .icon-btn { padding: 7px 11px; border-radius: 10px; border: 1px solid #d1d5db; background: white; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .icon-btn.primary { background: var(--line-color, #CD7C2F); color: white; border-color: transparent; }
-  .stop-btn { padding: 7px 11px; border-radius: 10px; border: none; background: #ef4444; color: white; font-weight: 600; font-size: 13px; cursor: pointer; display: none; }
-  .stop-btn.active { display: inline-block; }
-  
-  /* Auto Panel */
-  .auto-panel { padding: 12px 0; border-top: 1px solid #e5e7eb; display: none; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .auto-panel.open { display: flex; }
-  .auto-panel label { font-size: 12px; color: #4b5563; font-weight: 600; }
-  .auto-panel select { padding: 7px 10px; border-radius: 8px; border: 1px solid #d1d5db; background: white; font-size: 13px; min-width: 110px; }
-  .auto-panel .hint { font-size: 11px; color: #6b7280; flex-basis: 100%; margin-top: 4px; }
-  .speed-control { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
-  .speed-control select { padding: 4px 6px; border-radius: 6px; border: 1px solid #d1d5db; background: white; font-size: 12px; }
-
-  /* LED Display Board */
-  .led-board { background: #111; color: #ff9900; height: 36px; overflow: hidden; position: relative; border-radius: 4px; border: 2px solid #333; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
-  .led-text { position: absolute; white-space: nowrap; font-family: "Courier New", Courier, monospace; font-weight: bold; font-size: 16px; line-height: 32px; letter-spacing: 1px; transform: translateX(100%); text-shadow: 0 0 4px #ff9900; }
-  .led-board.active .led-text { animation: scrollLeft 15s linear infinite; }
-  @keyframes scrollLeft { 0% { transform: translateX(100vw); } 100% { transform: translateX(-150%); } }
-
-  /* Map & Stations */
-  main { padding: 14px 12px 100px; max-width: 720px; margin: 0 auto; }
-  .helper { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 10px 14px; border-radius: 12px; font-size: 12.5px; margin-bottom: 14px; line-height: 1.5; }
-  .map { position: relative; padding-left: 56px; }
-  .line-track { position: absolute; left: 30px; top: 22px; bottom: 22px; width: 8px; background: var(--line-color, #CD7C2F); border-radius: 4px; z-index: 0; }
-  
-  .station { position: relative; display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 0; margin-left: -34px; cursor: pointer; border-radius: 12px; transition: background 0.15s, transform 0.1s; user-select: none; }
-  .station:hover { background: rgba(0,0,0,0.03); }
-  .station:active { transform: scale(0.98); }
-  .station.active { background: color-mix(in srgb, var(--line-color, #CD7C2F) 14%, transparent); }
-  
-  .dot { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: white; border: 5px solid var(--line-color, #CD7C2F); box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 2; transition: transform 0.2s; position: relative; }
-  .station.active .dot { transform: scale(1.25); box-shadow: 0 0 0 6px color-mix(in srgb, var(--line-color, #CD7C2F) 25%, transparent); }
-  .dot.transfer { width: 26px; height: 26px; border-width: 4px; background: white; }
-  .dot.transfer::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--line-color, #CD7C2F); opacity: 0.18; }
-  .dot.terminal { background: var(--line-color, #CD7C2F); }
-  
-  /* Train Icon */
-  .train-icon { position: absolute; left: 22px; transform: translate(-50%, -50%); width: 44px; height: 26px; background: var(--line-color, #CD7C2F); border-radius: 6px; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; z-index: 5; transition: top 0.6s cubic-bezier(0.45, 0, 0.55, 1); pointer-events: none; opacity: 0; }
-  .train-icon::after { content: '🪟'; font-size: 10px; letter-spacing: 2px; }
-  .train-icon.visible { opacity: 1; }
-  
-  .station-info { flex: 1; min-width: 0; }
-  .station-name-ko { font-size: 18px; font-weight: 700; color: #111827; line-height: 1.2; }
-  .station-name-en { font-size: 12px; color: #6b7280; margin-top: 2px; }
-  
-  .transfers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-  .transfer-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 30px; padding: 0 12px; border-radius: 15px; font-size: 13px; font-weight: 700; color: white; transition: transform 0.1s; }
-  .transfer-badge.clickable { cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-  .transfer-badge.clickable:active { transform: scale(0.9); }
-  
-  .play-icon { flex: 0 0 auto; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; font-size: 18px; }
-  .station.active .play-icon { opacity: 1; }
-  
-  .loop-section { border: 2px dashed color-mix(in srgb, var(--line-color, #CD7C2F) 40%, white); border-radius: 16px; padding: 6px 0; margin-bottom: 8px; margin-left: -10px; padding-left: 10px; position: relative; }
-  .loop-label { position: absolute; top: -10px; right: 16px; background: white; padding: 0 8px; font-size: 11px; font-weight: 700; color: var(--line-color, #CD7C2F); }
-  
-  /* 분기역 아이콘 */
-  .branch-icon { display: inline-block; margin-left: 6px; font-size: 15px; vertical-align: middle; }
-  
-  /* 퀴즈 모드 */
-  .quiz-container { padding: 20px; max-width: 500px; margin: 14px auto; background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: none; }
-  .quiz-container.active { display: block; }
-  .quiz-progress { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
-  .quiz-question { font-size: 15px; color: #6b7280; margin-bottom: 12px; }
-  .quiz-station-name { font-size: 36px; font-weight: 800; color: #111827; text-align: center; padding: 22px 16px; background: #f4f6f8; border-radius: 12px; margin-bottom: 16px; word-break: keep-all; }
-  .quiz-color-box { width: 100%; height: 110px; border-radius: 12px; margin-bottom: 16px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.15); }
-  .quiz-line-badge-big { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; color: white; font-weight: 800; font-size: 17px; margin-right: 10px; vertical-align: middle; }
-  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .quiz-option { padding: 14px 10px; border: 2px solid #e5e7eb; border-radius: 12px; background: white; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; color: #111827; }
-  .quiz-option:active { transform: scale(0.97); }
-  .quiz-option.correct { background: #10b981; color: white; border-color: #10b981; }
-  .quiz-option.wrong { background: #ef4444; color: white; border-color: #ef4444; }
-  .quiz-option:disabled { cursor: not-allowed; opacity: 0.85; }
-  .quiz-line-badge { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; flex-shrink: 0; }
-  .quiz-feedback { margin-top: 14px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 15px; min-height: 22px; }
-  .quiz-feedback.correct { background: #d1fae5; color: #065f46; }
-  .quiz-feedback.wrong { background: #fee2e2; color: #991b1b; }
-  .quiz-result { text-align: center; padding: 24px 10px; }
-  .quiz-result-msg { font-size: 18px; color: #6b7280; }
-  .quiz-result-score { font-size: 56px; font-weight: 800; color: #111827; margin: 12px 0; }
-  .quiz-btn { padding: 12px 22px; background: #3b82f6; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin: 8px 4px 0; }
-  .quiz-btn.secondary { background: #6b7280; }
-
-  /* 🔤 초성 퀴즈 */
-  .chosung-display { font-size: 60px; font-weight: 800; color: #111827; text-align: center; letter-spacing: 12px; padding: 24px 10px; background: #f4f6f8; border-radius: 12px; margin-bottom: 16px; }
-  .chosung-hints { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-  .chosung-hint { padding: 11px 14px; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; font-size: 14px; color: #3730a3; font-weight: 600; animation: hintAppear 0.25s ease; }
-  @keyframes hintAppear { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-  .chosung-hint-btn { width: 100%; padding: 11px; background: white; border: 2px dashed #c7d2fe; border-radius: 10px; font-size: 14px; font-weight: 700; color: #4f46e5; cursor: pointer; margin-bottom: 16px; }
-  .chosung-hint-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-  .chosung-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .chosung-input { flex: 1; padding: 14px 16px; border: 2px solid #d1d5db; border-radius: 12px; font-size: 18px; font-weight: 700; text-align: center; }
-  .chosung-input:focus { outline: none; border-color: #4f46e5; }
-  .chosung-submit { padding: 0 22px; background: #4f46e5; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
-  .chosung-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-  .chosung-skip { width: 100%; padding: 10px; background: none; border: none; color: #9ca3af; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 4px; text-decoration: underline; }
-  
-  /* 🎫 내 기록 모달 */
-  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: flex-start; justify-content: center; padding: 50px 16px 20px; overflow-y: auto; }
-  .modal-overlay.active { display: flex; }
-  .modal-content { background: white; border-radius: 16px; max-width: 420px; width: 100%; padding: 18px 20px 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .modal-title { font-size: 17px; font-weight: 700; }
-  .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px 10px; color: #6b7280; }
-  .modal-desc { font-size: 12.5px; color: #6b7280; margin-bottom: 14px; line-height: 1.55; }
-  .ridden-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid #f3f4f6; }
-  .ridden-row:last-child { border-bottom: none; }
-  .ridden-line-badge { width: 32px; height: 32px; border-radius: 50%; color: white; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .ridden-line-name { flex: 1; font-size: 15px; font-weight: 600; color: #111827; }
-  .toggle-switch { position: relative; width: 48px; height: 26px; background: #d1d5db; border-radius: 13px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
-  .toggle-switch.on { background: #10b981; }
-  .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-  .toggle-switch.on::after { left: 25px; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
+<meta name="theme-color" content="#14213D" />
+<title>지하철 놀이</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body data-mode="line">
 
-<header style="--line-color: #CD7C2F">
-  <div class="header-row">
-    <div class="title">
-      <div class="line-badge" id="lineBadge">6</div>
-      <div>
-        <div class="title-text">지하철 놀이</div>
-        <div class="subtitle" id="subtitle">역을 누르면 안내방송이 나와요</div>
-      </div>
-    </div>
-    <div class="controls">
-      <select class="line-select" id="lineSelect"></select>
-      <button class="icon-btn" id="riddenBtn" title="내가 탄 호선">🎫</button>
-      <button class="icon-btn" id="quizBtn">🎮 퀴즈</button>
-      <button class="icon-btn" id="chosungBtn">🔤 초성퀴즈</button>
-      <button class="icon-btn" id="autoToggleBtn">🚂 자동운행</button>
-      <button class="stop-btn" id="stopBtn">■ 정지</button>
-    </div>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-badge" id="brandBadge">6</span>
+    <span class="brand-name">지하철 놀이</span>
   </div>
-  
-  <div class="led-board" id="ledBoard">
-    <div class="led-text" id="ledText">안전하고 편리한 지하철을 이용해 주셔서 감사합니다.</div>
-  </div>
-
-  <div class="auto-panel" id="autoPanel">
-    <label>출발</label><select id="autoStart"></select>
-    <label>도착</label><select id="autoEnd"></select>
-    <label>속도</label>
-    <select id="speedSelect">
-      <option value="0.85">느리게</option>
-      <option value="1.0" selected>보통</option>
-      <option value="1.2">빠르게</option>
-    </select>
-    <button class="icon-btn primary" id="autoPlayBtn">▶ 출발</button>
-    <div class="hint">기차가 자동으로 역마다 멈추며 안내방송을 합니다.</div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" data-mode="line" role="tab">🚇 노선</button>
+    <button class="tab" data-mode="trip" role="tab">🧭 여행</button>
+    <button class="tab" data-mode="quiz" role="tab">🎮 퀴즈</button>
+    <button class="tab" data-mode="chosung" role="tab">🔤 초성</button>
+  </nav>
+  <div class="tools">
+    <button class="tool" id="riddenBtn" title="내가 탄 호선">🎫</button>
+    <button class="tool" id="settingsBtn" title="설정">⚙️</button>
   </div>
 </header>
 
-<main>
-  <div class="helper">
-    💡 <b>역 탭</b>: 안내방송 자동 재생 (다시 탭하면 정지)<br>
-    🔄 <b>환승 뱃지 탭</b>: 해당 노선으로 바로 이동 (안내 중에는 비활성)<br>
-    🚂 <b>자동운행</b>: 출발/도착역을 고르면 기차가 역마다 이동해요
-  </div>
-  <div class="quiz-container" id="quizContainer"></div>
-  <div class="map" id="map"><div class="train-icon" id="trainIcon"></div></div>
+<main class="stage">
+  <!-- 왼쪽: 노선도 -->
+  <section class="rail">
+    <div class="rail-head">
+      <div class="line-chips" id="lineChips"></div>
+      <div class="rail-title" id="railTitle"></div>
+    </div>
+    <div class="map" id="map"></div>
+  </section>
+
+  <!-- 오른쪽: 열차 안 -->
+  <section class="cab">
+    <div class="led"><span class="led-text" id="ledText"></span></div>
+
+    <div class="platform">
+      <div class="sign" id="sign">
+        <div class="sign-top">
+          <span class="sign-badge" id="signBadge"></span>
+          <div class="sign-names">
+            <div class="sign-name" id="signName"></div>
+            <div class="sign-en" id="signEn"></div>
+          </div>
+          <div class="sign-tr" id="signTr"></div>
+        </div>
+        <div class="sign-band">
+          <span class="sign-prev" id="signPrev"></span>
+          <span class="sign-dir" id="signDir"></span>
+          <span class="sign-next" id="signNext"></span>
+        </div>
+      </div>
+      <div class="doors" id="doors" aria-hidden="true">
+        <div class="door left"><i></i></div>
+        <div class="door right"><i></i></div>
+      </div>
+    </div>
+
+    <div class="strip" id="strip"></div>
+
+    <!-- 노선 모드: 자동운행 -->
+    <div class="panel panel-line">
+      <div class="run-row">
+        <label class="field"><span>출발</span><select id="autoStart"></select></label>
+        <button class="swap" id="autoSwap" title="출발·도착 바꾸기">⇄</button>
+        <label class="field"><span>도착</span><select id="autoEnd"></select></label>
+        <button class="go" id="autoGo">▶ 자동운행</button>
+      </div>
+      <p class="hint">역을 누르면 안내방송이 나와요. 다시 누르면 멈춰요.</p>
+    </div>
+
+    <!-- 여행 모드 -->
+    <div class="panel panel-trip">
+      <div class="trip-ends">
+        <button class="end-btn" id="tripFrom"><small>출발</small><b>역 고르기</b></button>
+        <button class="swap" id="tripSwap" title="출발·도착 바꾸기">⇄</button>
+        <button class="end-btn" id="tripTo"><small>도착</small><b>역 고르기</b></button>
+        <button class="go" id="tripGo" disabled>▶ 출발</button>
+      </div>
+      <div class="route" id="routeCard"></div>
+      <div class="recent" id="recentTrips"></div>
+    </div>
+
+    <div class="run-status" id="runStatus"></div>
+  </section>
+
+  <!-- 퀴즈 화면 -->
+  <section class="quiz" id="quizView"></section>
 </main>
 
-<div class="modal-overlay" id="riddenModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">🎫 내가 탄 호선</div>
-      <button class="modal-close" id="riddenModalClose">✕</button>
+<button class="stop-fab" id="stopBtn">■ 멈추기</button>
+
+<!-- 환승 연출 -->
+<div class="overlay" id="transferOverlay">
+  <div class="transfer-card">
+    <div class="transfer-lines"><span id="trFrom"></span><span class="walker">🚶</span><span id="trTo"></span></div>
+    <div class="transfer-title" id="trTitle"></div>
+    <div class="transfer-sub" id="trSub"></div>
+    <div class="footsteps"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+</div>
+
+<!-- 도착 축하 -->
+<div class="overlay" id="arriveOverlay">
+  <div class="arrive-card">
+    <div class="arrive-emoji">🎉</div>
+    <div class="arrive-title" id="arriveTitle"></div>
+    <div class="arrive-sub" id="arriveSub"></div>
+    <button class="go" id="arriveOk">좋아요!</button>
+  </div>
+</div>
+
+<!-- 역 고르기 -->
+<div class="sheet-overlay" id="pickerOverlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <b id="pickerTitle">출발역 고르기</b>
+      <button class="sheet-close" data-close="pickerOverlay">✕</button>
     </div>
-    <div class="modal-desc">실제로 타본 호선을 켜주세요. 켠 호선은 화면 좌측 상단 동그라미에 ⭐ 별표로 표시되고, 노선 선택 목록에도 🎫이 붙어요.</div>
+    <input class="picker-search" id="pickerSearch" type="search" placeholder="역 이름이나 초성으로 찾기 (예: ㄱㄴ)" autocomplete="off" />
+    <div class="picker-lines" id="pickerLines"></div>
+    <div class="picker-grid" id="pickerGrid"></div>
+  </div>
+</div>
+
+<!-- 내가 탄 호선 -->
+<div class="sheet-overlay" id="riddenOverlay">
+  <div class="sheet narrow">
+    <div class="sheet-head">
+      <b>🎫 내가 탄 호선</b>
+      <button class="sheet-close" data-close="riddenOverlay">✕</button>
+    </div>
+    <p class="sheet-desc">실제로 타본 호선을 켜주세요. 켠 호선은 노선 버튼과 왼쪽 위 동그라미에 ⭐이 붙어요.</p>
     <div id="riddenList"></div>
   </div>
 </div>
 
-<script src="lines.js"></script>
-<script>
-// 환승 뱃지 표시용
-const TRANSFER_COLORS = { '1':'#0052A4','2':'#00A84D','3':'#EF7C1C','4':'#00A5DE','5':'#996CAC','6':'#CD7C2F','7':'#747F00','8':'#E6186C','9':'#BDB092','경의중앙':'#77C4A3','공항철도':'#0090D2','경춘':'#0C8E72','우이신설':'#B7C450','신림':'#6789CA','서해':'#8BC53F','인천1':'#7CA8D5','인천2':'#ED8B00','신분당':'#D4003B','수인분당':'#FABE00','GTX-A':'#9A6292' };
-const TRANSFER_NAMES_KO = { '1':'1호선','2':'2호선','3':'3호선','4':'4호선','5':'5호선','6':'6호선','7':'7호선','8':'8호선','9':'9호선','경의중앙':'경의중앙선','공항철도':'공항철도','경춘':'경춘선','우이신설':'우이신설선','신림':'신림선','서해':'서해선','인천1':'인천1호선','인천2':'인천2호선','신분당':'신분당선','수인분당':'수인분당선','GTX-A':'GTX-A' };
-const TRANSFER_BADGE = { '경의중앙':'경중','공항철도':'공항','경춘':'경춘','우이신설':'우이','신림':'신림','서해':'서해','인천1':'인1','인천2':'인2','신분당':'신분당','수인분당':'수분','GTX-A':'GTX' };
-
-// 한국어 TTS용 노선명 (숫자→한글로 변환하여 "칠.. 호선" 같은 갭 제거)
-const TRANSFER_NAMES_KO_TTS = { 
-  '1':'일호선','2':'이호선','3':'삼호선','4':'사호선','5':'오호선',
-  '6':'육호선','7':'칠호선','8':'팔호선','9':'구호선',
-  '경의중앙':'경의중앙선','공항철도':'공항철도','경춘':'경춘선',
-  '우이신설':'우이신설선','신림':'신림선','서해':'서해선',
-  '인천1':'인천일호선','인천2':'인천이호선',
-  '신분당':'신분당선','수인분당':'수인분당선','GTX-A':'지티엑스에이'
-};
-
-// 환승 안내용 영어 노선명 (the 제거됨)
-const TRANSFER_NAMES_EN_TTS = { 
-  '1':'Line Number 1','2':'Line Number 2','3':'Line Number 3','4':'Line Number 4','5':'Line Number 5','6':'Line Number 6','7':'Line Number 7','8':'Line Number 8','9':'Line Number 9',
-  '경의중앙':'Gyung-we Joong-ang Line',
-  '공항철도':'Airport Railroad',
-  '경춘':'Gyung-choon Line',
-  '우이신설':'Oo-ee Shin-seol Line',
-  '신림':'Shil-lim Line',
-  '서해':'Suh-hae Line',
-  '인천1':'Incheon Line Number 1',
-  '인천2':'Incheon Line Number 2',
-  '신분당':'Shin-boon-dang Line',
-  '수인분당':'Soo-in Boon-dang Line',
-  'GTX-A':'GTX-A' 
-};
-
-// 노선 데이터
-
-// 시작 노선: localStorage 우선, 없으면 6호선
-let currentLine = '6';
-try {
-  const saved = localStorage.getItem('lastLine');
-  if (saved && lineData[saved]) currentLine = saved;
-} catch(_) {}
-
-let currentStationIdx = -1, isPlaying = false, speechRate = 1.0;
-let koreanVoice = null, englishVoice = null, autoMode = false, autoCancel = false;
-let stationPlayCount = 0;
-let nextRandomTarget = Math.floor(Math.random() * 4) + 5; // 5~8
-
-// 노선 완주 카운트 (자동운행으로 첫 역↔끝 역 완주 시 누적, 내부 데이터만 유지)
-let lineCompletions = {};
-try {
-  const saved = localStorage.getItem('lineCompletions');
-  if (saved) lineCompletions = JSON.parse(saved);
-} catch(_) {}
-
-// 실제 타본 호선 (사용자가 모달에서 체크)
-let riddenLines = [];
-try {
-  const saved = localStorage.getItem('riddenLines');
-  if (saved) riddenLines = JSON.parse(saved);
-} catch(_) {}
-
-// 호선 단위로 통합 (1호선 인천행/신창행, 5호선 하남행/마천행은 같은 호선)
-function getBaseLineKey(key) {
-  if (key === '1_2') return '1';
-  if (key === '5_2') return '5';
-  return key;
-}
-
-// 퀴즈 상태
-let quizState = null;
-
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  koreanVoice = voices.find(v => v.lang === 'ko-KR' && /female|여성|Yuna|Heami/i.test(v.name)) || voices.find(v => v.lang === 'ko-KR');
-  englishVoice = voices.find(v => v.lang === 'en-US' && /female|samantha|Karen/i.test(v.name)) || voices.find(v => v.lang === 'en-US');
-}
-loadVoices();
-if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
-
-// 한국어 조사 '으로/로' 결정 (받침 유무에 따라)
-function getRoParticle(word) {
-  if (!word) return '로';
-  const last = word.charCodeAt(word.length - 1);
-  if (last >= 0xAC00 && last <= 0xD7A3) {
-    const jong = (last - 0xAC00) % 28;
-    // 받침 없음(0) 또는 ㄹ 받침(8) → '로', 그 외 → '으로'
-    return (jong === 0 || jong === 8) ? '로' : '으로';
-  }
-  // 영문/숫자 끝: 단순화하여 '로'
-  return '로';
-}
-
-// 발차 멜로디 (Web Audio API, 외부 의존성 없음)
-function playDepartureChime() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const freq = 880;       // A5 - "띵" 톤
-    const beats = 5;        // 5회 반복
-    const interval = 0.14;  // 140ms 간격
-    const duration = 0.11;  // 비트당 110ms
-    
-    for (let i = 0; i < beats; i++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      
-      const t0 = ctx.currentTime + i * interval;
-      gain.gain.setValueAtTime(0, t0);
-      gain.gain.linearRampToValueAtTime(0.18, t0 + 0.005);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
-      osc.start(t0);
-      osc.stop(t0 + duration + 0.02);
-    }
-  } catch(_) { /* 오디오 컨텍스트 사용 불가 환경에서는 조용히 무시 */ }
-}
-
-// 영문 발음을 한국어 발음과 유사하게 자동 변환하는 내부 처리 함수 (TTS 전용)
-function getPhoneticEn(nameEn) {
-  let s = nameEn;
-  
-  // 1. O가(숫자 역명)를 sam-ga 등으로 읽도록 변환
-  s = s.replace(/1\(il\)-ga|1-ga/gi, "il-ga")
-       .replace(/2\(i\)-ga|2-ga/gi, "ee-ga")
-       .replace(/3\(sam\)-ga|3-ga/gi, "sam-ga")
-       .replace(/4\(sa\)-ga|4-ga/gi, "sa-ga")
-       .replace(/5\(o\)-ga|5-ga/gi, "oh-ga")
-       .replace(/6\(yuk\)-ga|6-ga/gi, "yook-ga")
-       .replace(/7\(chil\)-ga|7-ga/gi, "chil-ga")
-       .replace(/8\(pal\)-ga|8-ga/gi, "pal-ga")
-       .replace(/9\(gu\)-ga|9-ga/gi, "goo-ga");
-       
-  // 2. 대학교 풀네임 적용
-  s = s.replace(/Univ\./gi, "University");
-  
-  // 3. 한국어 로마자 표기를 영어 TTS가 정확히 발음하도록 기호 변환 (eo->uh, eu->oo 등)
-  s = s.replace(/yeo/g, "yuh").replace(/Yeo/g, "Yuh");
-  s = s.replace(/eong/g, "ung").replace(/Eong/g, "Ung");
-  s = s.replace(/eo/g, "uh").replace(/Eo/g, "Uh");
-  s = s.replace(/eu/g, "oo").replace(/Eu/g, "Oo");
-  s = s.replace(/ui/g, "we").replace(/Ui/g, "We");
-
-  return s;
-}
-
-function buildAnnouncementChunks(station) {
-  const chunks = [];
-  const isTransfer = station.transfers && station.transfers.length > 0;
-  
-  // 한국어 방송 
-  let koText;
-  if (isTransfer) {
-    const trList = station.transfers.map(t => TRANSFER_NAMES_KO_TTS[t] || (t+'호선'));
-    const tt = trList.join(', ');
-    const particle = getRoParticle(trList[trList.length - 1]);
-    koText = `이번 역은, ${tt}${particle} 갈아타실 수 있는, ${station.name}. ${station.name} 역입니다.`;
-  } else {
-    koText = `이번 역은, ${station.name}. ${station.name} 역입니다.`;
-  }
-  // 분기 안내 (예: 5호선 강동역에서 마천/하남검단산 방면 갈아타기 안내)
-  if (station.branchKo) {
-    koText += ` ${station.branchKo}`;
-  }
-  chunks.push({ text: koText, lang: 'ko-KR', voice: koreanVoice });
-  
-  // 영어 방송 (화면 스펠링과 무관하게 TTS용 한국어 발음 교정 적용)
-  let spokenNameEn = getPhoneticEn(station.nameEn);
-  let enText = `This stop is, ${spokenNameEn}. ${spokenNameEn}.`;
-  
-  if (isTransfer) {
-    const tt = station.transfers.map(t => TRANSFER_NAMES_EN_TTS[t] || t).join(', ');
-    enText += ` You can transfer to, ${tt}.`;
-  }
-  // 분기 안내 영문
-  if (station.branchEn) {
-    enText += ` ${station.branchEn}`;
-  }
-  chunks.push({ text: enText, lang: 'en-US', voice: englishVoice });
-  
-  return chunks;
-}
-
-// 종착역 전용 안내문 (국문 + 영문, 일반 안내를 대체)
-function buildTerminalAnnouncementChunks(station) {
-  const chunks = [];
-  const isTransfer = station.transfers && station.transfers.length > 0;
-  
-  // 한국어
-  let koText;
-  if (isTransfer) {
-    const trList = station.transfers.map(t => TRANSFER_NAMES_KO_TTS[t] || (t+'호선'));
-    const tt = trList.join(', ');
-    const particle = getRoParticle(trList[trList.length - 1]);
-    koText = `이번 역은 우리 열차의 종착역인, ${tt}${particle} 갈아타실 수 있는, ${station.name}. ${station.name} 역입니다. 내리실 때 두고 내리시는 물건이 없는지 다시 한 번 확인하시기 바랍니다.`;
-  } else {
-    koText = `이번 역은 우리 열차의 종착역인, ${station.name}. ${station.name} 역입니다. 내리실 때 두고 내리시는 물건이 없는지 다시 한 번 확인하시기 바랍니다.`;
-  }
-  chunks.push({ text: koText, lang: 'ko-KR', voice: koreanVoice });
-  
-  // 영어
-  let spokenNameEn = getPhoneticEn(station.nameEn);
-  let enText = `This is the last stop, ${spokenNameEn}.`;
-  if (isTransfer) {
-    const tt = station.transfers.map(t => TRANSFER_NAMES_EN_TTS[t] || t).join(', ');
-    enText += ` You can transfer to, ${tt}.`;
-  }
-  enText += ` Please make sure you have all your belongings before leaving the train. Thank you for riding with us.`;
-  chunks.push({ text: enText, lang: 'en-US', voice: englishVoice });
-  
-  return chunks;
-}
-
-function speakChunk(chunk) {
-  return new Promise(resolve => {
-    if (!chunk.text) { resolve(); return; }
-    const u = new SpeechSynthesisUtterance(chunk.text);
-    u.lang = chunk.lang;
-    u.rate = speechRate;
-    if (chunk.voice) u.voice = chunk.voice;
-    u.onend = () => setTimeout(resolve, 300);
-    u.onerror = () => resolve();
-    speechSynthesis.speak(u);
-  });
-}
-
-async function speakChain(chunks) {
-  for (const chunk of chunks) {
-    if (!isPlaying && !autoMode) return;
-    if (autoCancel) return;
-    await speakChunk(chunk);
-  }
-}
-
-async function playRandomAnnouncementIfNeeded() {
-  stationPlayCount++;
-  if (stationPlayCount >= nextRandomTarget) {
-    const msgs = [
-      "안전선 안쪽으로 한 걸음 물러서 주십시오.",
-      "출입문에 기대지 마세요.",
-      "노약자 임산부 자리를 양보해 주십시오.",
-      "휴대전화는 진동으로 부탁드립니다.",
-      "이 역은 전동차와 승강장 사이가 넓습니다. 내리실 때 발빠짐에 주의하세요."
-    ];
-    const msg = msgs[Math.floor(Math.random() * msgs.length)];
-    setLedBoard(msg);
-    await speakChunk({ text: msg, lang: 'ko-KR', voice: koreanVoice });
-    
-    stationPlayCount = 0;
-    nextRandomTarget = Math.floor(Math.random() * 4) + 5; // 5~8
-    return true; 
-  }
-  return false;
-}
-
-// 개별 역 터치 시 실행되는 안내방송
-async function announce(idx) {
-  const line = lineData[currentLine];
-  const station = line.stations[idx];
-  if (!station) return;
-  if (isPlaying && currentStationIdx === idx && !autoMode) { stopAnnounce(); return; }
-  stopAnnounce();
-  
-  currentStationIdx = idx; isPlaying = true; autoCancel = false;
-  updateUI();
-  moveTrainTo(idx);
-
-  const playedRandom = await playRandomAnnouncementIfNeeded();
-  if (autoCancel) return;
-  if (playedRandom) await new Promise(r => setTimeout(r, 500));
-
-  setLedBoard(`이번 역은 ${station.name} 역입니다. This stop is ${station.nameEn}.`);
-  await speakChain(buildAnnouncementChunks(station));
-  
-  if (!autoMode) { isPlaying = false; currentStationIdx = -1; updateUI(); setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.'); }
-}
-
-// 자동운행 로직 
-async function startAutoRun() {
-  const line = lineData[currentLine];
-  const startIdx = parseInt(document.getElementById('autoStart').value);
-  const endIdx = parseInt(document.getElementById('autoEnd').value);
-  if (isNaN(startIdx) || isNaN(endIdx) || startIdx === endIdx) { alert('출발역과 도착역을 다르게 골라주세요!'); return; }
-  
-  stopAnnounce();
-  await new Promise(r => setTimeout(r, 100));
-  
-  autoMode = true; autoCancel = false; isPlaying = true;
-  
-  // 순환선(2호선 본선) 여부: 배열 양 끝이 실제로는 인접역
-  const N = line.stations.length;
-  const isLoopLine = (currentLine === '2');
-  // 다음 인덱스 계산: 순환선이면 wrap, 아니면 그대로
-  const nextIdx = (i, s) => isLoopLine ? ((i + s) % N + N) % N : (i + s);
-  
-  let step;
-  if (isLoopLine) {
-    // 정방향/역방향 거리 비교 후 짧은 쪽 선택 (동점은 정방향)
-    const fwd = ((endIdx - startIdx) % N + N) % N;
-    const bwd = N - fwd;
-    step = (bwd < fwd) ? -1 : 1;
-  } else {
-    step = startIdx < endIdx ? 1 : -1;
-  }
-  let idx = startIdx;
-  
-  while (true) {
-    if (autoCancel) break;
-    
-    // 역 정차
-    currentStationIdx = idx; updateUI(); moveTrainTo(idx);
-    
-    // 0. 랜덤 안내방송 (이번 역 안내 전)
-    const playedRandom = await playRandomAnnouncementIfNeeded();
-    if (autoCancel) break;
-    if (playedRandom) await new Promise(r => setTimeout(r, 500));
-    
-    // 1. 도착역(자동운행 마지막)에서 처리 — 실제 노선 종착역 여부에 따라 분기
-    if (idx === endIdx) {
-      const isRealTerminal = !isLoopLine && (idx === 0 || idx === line.stations.length - 1);
-      
-      if (isRealTerminal) {
-        // 실제 노선의 종착역: 종착역 안내(국문+영문)
-        setLedBoard(`이번 역은 우리 열차의 종착역, ${line.stations[idx].name} 역입니다. This is the last stop, ${line.stations[idx].nameEn}.`);
-        await speakChain(buildTerminalAnnouncementChunks(line.stations[idx]));
-      } else {
-        // 중간 역에서 자동운행 종료: 일반 안내만
-        setLedBoard(`이번 역은 ${line.stations[idx].name} 역입니다. This stop is ${line.stations[idx].nameEn}.`);
-        await speakChain(buildAnnouncementChunks(line.stations[idx]));
-      }
-      if (autoCancel) break;
-      break;
-    }
-    
-    // 일반 안내 (국문+영문)
-    setLedBoard(`이번 역은 ${line.stations[idx].name} 역입니다. This stop is ${line.stations[idx].nameEn}.`);
-    await speakChain(buildAnnouncementChunks(line.stations[idx]));
-    if (autoCancel) break;
-    
-    await new Promise(r => setTimeout(r, 800));
-    
-    // 2. 출입문 닫힘 안내 (발차음 제거)
-    setLedBoard('열차가 곧 출발합니다. 출입문 닫힙니다.');
-    await new Promise(r => setTimeout(r, 1000));
-
-    // 3. "다음 역은 ~" 안내방송
-    const nextStation = line.stations[nextIdx(idx, step)];
-    setLedBoard(`다음 역은 ${nextStation.name} 역입니다.`);
-    
-    let spokenNextNameEn = getPhoneticEn(nextStation.nameEn);
-    
-    await speakChunk({ text: `다음 역은, ${nextStation.name}. ${nextStation.name} 역입니다.`, lang: 'ko-KR', voice: koreanVoice });
-    if (autoCancel) break;
-    await speakChunk({ text: `The next stop is, ${spokenNextNameEn}.`, lang: 'en-US', voice: englishVoice });
-    
-    if (autoCancel) break;
-    await new Promise(r => setTimeout(r, 1000)); 
-    
-    idx = nextIdx(idx, step);
-  }
-  
-  if (!autoCancel) {
-    const isRealTerminal = !isLoopLine && (idx === 0 || idx === line.stations.length - 1);
-    if (isRealTerminal) {
-      // 완주 카운트 조건: 시작도 반대 끝이어야 진짜 완주
-      const opposite = (idx === 0) ? line.stations.length - 1 : 0;
-      if (startIdx === opposite) {
-        const baseKey = getBaseLineKey(currentLine);
-        lineCompletions[baseKey] = (lineCompletions[baseKey] || 0) + 1;
-        try { localStorage.setItem('lineCompletions', JSON.stringify(lineCompletions)); } catch(_) {}
-        renderLineSelect();
-      }
-      setLedBoard('종착역에 도착했습니다. 안녕히 가십시오.');
-    } else {
-      setLedBoard(`${line.stations[idx].name} 역에 도착했습니다. 안녕히 가십시오.`);
-    }
-  } else {
-    setLedBoard('운행이 중단되었습니다.');
-  }
-  await new Promise(r => setTimeout(r, 2000));
-  
-  autoMode = false; isPlaying = false; currentStationIdx = -1;
-  hideTrain(); updateUI(); setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.');
-}
-
-function stopAnnounce() {
-  speechSynthesis.cancel();
-  autoCancel = true; isPlaying = false; autoMode = false; currentStationIdx = -1;
-  hideTrain(); updateUI();
-  setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.');
-}
-
-function moveTrainTo(idx) {
-  const train = document.getElementById('trainIcon');
-  const target = Array.from(document.querySelectorAll('.station')).find(el => parseInt(el.dataset.idx) === idx);
-  if (!target) return;
-  const map = document.getElementById('map');
-  const mapRect = map.getBoundingClientRect();
-  const targetRect = target.getBoundingClientRect();
-  train.style.top = (targetRect.top - mapRect.top + targetRect.height / 2) + 'px';
-  train.classList.add('visible');
-  target.scrollIntoView({ behavior:'smooth', block:'center' });
-}
-function hideTrain() { document.getElementById('trainIcon').classList.remove('visible'); }
-function updateUI() {
-  document.querySelectorAll('.station').forEach(el => el.classList.toggle('active', parseInt(el.dataset.idx) === currentStationIdx));
-  document.getElementById('stopBtn').classList.toggle('active', isPlaying);
-}
-function setLedBoard(text) {
-  const board = document.getElementById('ledBoard');
-  const textEl = document.getElementById('ledText');
-  board.classList.remove('active');
-  void board.offsetWidth;
-  textEl.innerHTML = text + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + text;
-  board.classList.add('active');
-}
-
-// 노선 선택 드롭다운: optgroup으로 그룹화 + 탑승 호선 🎫 표시
-function renderLineSelect() {
-  const sel = document.getElementById('lineSelect');
-  sel.innerHTML = '';
-  
-  const groups = [
-    { label: '서울 지하철 1~9호선', keys: ['1', '1_2', '2', '3', '4', '5', '5_2', '6', '7', '8', '9'] },
-    { label: '광역·수도권', keys: ['경의중앙', '경춘', '공항철도'] }
-  ];
-  
-  groups.forEach(g => {
-    const og = document.createElement('optgroup');
-    og.label = g.label;
-    g.keys.forEach(k => {
-      if (!lineData[k]) return;
-      const opt = document.createElement('option');
-      opt.value = k; 
-      const baseKey = getBaseLineKey(k);
-      const isRidden = riddenLines.includes(baseKey);
-      opt.textContent = lineData[k].name + (isRidden ? ' 🎫' : '');
-      og.appendChild(opt);
-    });
-    sel.appendChild(og);
-  });
-  sel.value = currentLine;
-}
-
-function renderAutoSelects() {
-  const line = lineData[currentLine];
-  const start = document.getElementById('autoStart'), end = document.getElementById('autoEnd');
-  start.innerHTML = ''; end.innerHTML = '';
-  line.stations.forEach((s, i) => {
-    const o1 = document.createElement('option'); o1.value = i; o1.textContent = s.name; start.appendChild(o1);
-    const o2 = document.createElement('option'); o2.value = i; o2.textContent = s.name; end.appendChild(o2);
-  });
-  start.value = 0; end.value = line.stations.length - 1;
-}
-function renderLine(lineKey) {
-  const line = lineData[lineKey];
-  document.documentElement.style.setProperty('--line-color', line.color);
-  document.querySelector('header').style.setProperty('--line-color', line.color);
-  renderLineBadge();
-  document.getElementById('autoPlayBtn').style.background = line.color;
-  document.getElementById('subtitle').textContent = line.name + ' · ' + line.stations.length + '개 역';
-  const map = document.getElementById('map');
-  const train = document.getElementById('trainIcon');
-  map.innerHTML = ''; map.appendChild(train);
-  const track = document.createElement('div'); track.className = 'line-track';
-  map.appendChild(track);
-  
-  const loopStations = line.stations.filter(s => s.loopStart || s.inLoop || s.loopEnd);
-  const mainStations = line.stations.filter(s => !s.loopStart && !s.inLoop && !s.loopEnd);
-  
-  if (loopStations.length > 0) {
-    const loopBox = document.createElement('div'); loopBox.className = 'loop-section';
-    loopBox.style.setProperty('--line-color', line.color);
-    const label = document.createElement('div'); label.className = 'loop-label'; label.textContent = '🔁 응암순환';
-    loopBox.appendChild(label);
-    loopStations.forEach((s) => loopBox.appendChild(createStationElement(s, line.stations.indexOf(s), line)));
-    map.appendChild(loopBox);
-  }
-  
-  mainStations.forEach((s, i) => {
-    const idx = line.stations.indexOf(s);
-    const el = createStationElement(s, idx, line);
-    if (i === 0 || i === mainStations.length - 1) el.querySelector('.dot').classList.add('terminal');
-    map.appendChild(el);
-  });
-  hideTrain(); renderAutoSelects();
-}
-
-function createStationElement(station, idx, line) {
-  const el = document.createElement('div');
-  el.className = 'station'; el.dataset.idx = idx;
-  el.style.setProperty('--line-color', line.color);
-  const dot = document.createElement('div');
-  dot.className = 'dot' + (station.transfers.length > 0 ? ' transfer' : '');
-  el.appendChild(dot);
-  const info = document.createElement('div'); info.className = 'station-info';
-  const nameKo = document.createElement('div'); nameKo.className = 'station-name-ko'; nameKo.textContent = station.name;
-  // 분기역 표시 (🔀)
-  if (station.branchKo) {
-    const branchIcon = document.createElement('span');
-    branchIcon.className = 'branch-icon';
-    branchIcon.textContent = '🔀';
-    branchIcon.title = '분기역';
-    nameKo.appendChild(branchIcon);
-  }
-  info.appendChild(nameKo);
-  const nameEn = document.createElement('div'); nameEn.className = 'station-name-en'; nameEn.textContent = station.nameEn;
-  info.appendChild(nameEn);
-  if (station.transfers.length > 0) {
-    const transfers = document.createElement('div'); transfers.className = 'transfers';
-    station.transfers.forEach(t => {
-      const badge = document.createElement('span'); 
-      badge.className = 'transfer-badge';
-      badge.textContent = /^\d$/.test(t) ? t : (TRANSFER_BADGE[t] || t);
-      badge.style.background = TRANSFER_COLORS[t] || '#9ca3af';
-      
-      // 환승 뱃지 → 해당 노선 이동 (해당 노선이 존재할 때만 클릭 가능)
-      if (lineData[t]) {
-        badge.classList.add('clickable');
-        badge.title = `${TRANSFER_NAMES_KO[t] || t}로 이동`;
-        badge.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (autoMode || isPlaying) return; // 안내 중에는 무시
-          const fromStationName = station.name; // 현재 역명 보존
-          currentLine = t;
-          try { localStorage.setItem('lastLine', currentLine); } catch(_) {}
-          document.getElementById('lineSelect').value = currentLine;
-          stopAnnounce();
-          renderLine(currentLine);
-          // 같은 역명이 새 노선에 있으면 그 역으로, 없으면 맨 위로
-          setTimeout(() => {
-            const targetLine = lineData[currentLine];
-            const targetIdx = targetLine.stations.findIndex(s => s.name === fromStationName);
-            if (targetIdx >= 0) {
-              const targetEl = Array.from(document.querySelectorAll('.station')).find(el => parseInt(el.dataset.idx) === targetIdx);
-              if (targetEl) { targetEl.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }, 150);
-        });
-      }
-      
-      transfers.appendChild(badge);
-    });
-    info.appendChild(transfers);
-  }
-  el.appendChild(info);
-  const playIcon = document.createElement('div'); playIcon.className = 'play-icon'; playIcon.textContent = '🔊';
-  el.appendChild(playIcon);
-  el.addEventListener('click', () => { if (autoMode) return; announce(idx); });
-  return el;
-}
-
-document.getElementById('lineSelect').addEventListener('change', (e) => { 
-  currentLine = e.target.value; 
-  try { localStorage.setItem('lastLine', currentLine); } catch(_) {}
-  stopAnnounce(); 
-  renderLine(currentLine); 
-});
-document.getElementById('speedSelect').addEventListener('change', (e) => { speechRate = parseFloat(e.target.value); });
-document.getElementById('stopBtn').addEventListener('click', stopAnnounce);
-document.getElementById('autoToggleBtn').addEventListener('click', () => { document.getElementById('autoPanel').classList.toggle('open'); });
-document.getElementById('autoPlayBtn').addEventListener('click', () => { startAutoRun(); });
-
-// === 퀴즈 모드 ===
-function startQuiz() {
-  if (autoMode || isPlaying) {
-    alert('안내방송 중에는 퀴즈를 시작할 수 없어요!');
-    return;
-  }
-  stopAnnounce();
-  quizState = {
-    questions: generateQuizQuestions(5),
-    currentIdx: 0,
-    score: 0
-  };
-  showQuizScreen();
-  renderCurrentQuestion();
-}
-
-function generateQuizQuestions(n) {
-  const generators = [genModeTransferIn, genModeTransferOut, genModeTerminal, genModeColor];
-  const questions = [];
-  let attempts = 0;
-  while (questions.length < n && attempts < n * 4) {
-    const gen = generators[Math.floor(Math.random() * generators.length)];
-    const q = gen();
-    if (q) questions.push(q);
-    attempts++;
-  }
-  return questions;
-}
-
-// 공통: 역명 → 환승 가능한 base 노선 집합
-function buildStationLinesMap() {
-  const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
-  const subMap = { '1':['1','1_2'], '5':['5','5_2'] };
-  const map = {};
-  baseLines.forEach(b => {
-    const subs = subMap[b] || [b];
-    subs.forEach(k => {
-      if (!lineData[k]) return;
-      lineData[k].stations.forEach(s => {
-        if (!map[s.name]) map[s.name] = new Set();
-        map[s.name].add(b);
-        s.transfers.forEach(t => {
-          if (baseLines.includes(t)) map[s.name].add(t);
-        });
-      });
-    });
-  });
-  return { map, baseLines };
-}
-
-// 모드 1: 환승 가능 호선 ("이 역은 어느 노선?")
-function genModeTransferIn() {
-  const { map, baseLines } = buildStationLinesMap();
-  const stationNames = Object.keys(map);
-  const name = stationNames[Math.floor(Math.random() * stationNames.length)];
-  const correctLines = [...map[name]];
-  const display = correctLines[Math.floor(Math.random() * correctLines.length)];
-  const wrongPool = baseLines.filter(b => !correctLines.includes(b));
-  const wrongs = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
-  const options = [...wrongs, display].sort(() => Math.random() - 0.5);
-  return { mode: 'transfer-in', stationName: name, displayCorrect: display, options, acceptedAnswers: correctLines };
-}
-
-// 모드 2: 환승 불가 호선 ("이 역에서 갈아탈 수 없는 호선은?")
-function genModeTransferOut() {
-  const { map, baseLines } = buildStationLinesMap();
-  // 환승 호선 3개 이상인 역만 출제 (해당 역의 base 노선 + 환승 = 3+)
-  const eligible = Object.keys(map).filter(n => map[n].size >= 3);
-  if (eligible.length === 0) return null;
-  const name = eligible[Math.floor(Math.random() * eligible.length)];
-  const transferable = [...map[name]];
-  // 환승 가능 3개를 옵션으로
-  const valid3 = transferable.sort(() => Math.random() - 0.5).slice(0, 3);
-  // 환승 불가 1개를 정답으로
-  const wrongPool = baseLines.filter(b => !transferable.includes(b));
-  if (wrongPool.length === 0) return null;
-  const correctAnswer = wrongPool[Math.floor(Math.random() * wrongPool.length)];
-  const options = [...valid3, correctAnswer].sort(() => Math.random() - 0.5);
-  return { mode: 'transfer-out', stationName: name, options, acceptedAnswers: [correctAnswer] };
-}
-
-// 모드 3: 노선 종착역 ("○호선의 마지막 역은?")
-// 분기 노선(1·5호선: 노선명에 행선지=답이 노출)과 순환 노선(2호선) 제외
-function genModeTerminal() {
-  const eligibleLines = ['3', '4', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
-  const lineKey = eligibleLines[Math.floor(Math.random() * eligibleLines.length)];
-  const stations = lineData[lineKey].stations;
-  const isFirst = Math.random() < 0.5;
-  const correctStation = isFirst ? stations[0].name : stations[stations.length - 1].name;
-  const direction = isFirst ? '첫' : '마지막';
-  // 다른 노선의 종착역들을 오답 풀로
-  const allTerminals = new Set();
-  eligibleLines.forEach(k => {
-    const s = lineData[k].stations;
-    allTerminals.add(s[0].name);
-    allTerminals.add(s[s.length - 1].name);
-  });
-  allTerminals.delete(correctStation);
-  const wrongs = [...allTerminals].sort(() => Math.random() - 0.5).slice(0, 3);
-  const options = [...wrongs, correctStation].sort(() => Math.random() - 0.5);
-  return { mode: 'terminal', lineKey, lineName: lineData[lineKey].name, direction, options, acceptedAnswers: [correctStation] };
-}
-
-// 모드 4: 색깔 → 호선 ("이 색은 어느 호선?")
-function genModeColor() {
-  const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
-  const correctLine = baseLines[Math.floor(Math.random() * baseLines.length)];
-  const color = TRANSFER_COLORS[correctLine];
-  const wrongs = baseLines.filter(b => b !== correctLine).sort(() => Math.random() - 0.5).slice(0, 3);
-  const options = [...wrongs, correctLine].sort(() => Math.random() - 0.5);
-  return { mode: 'color', color, options, acceptedAnswers: [correctLine] };
-}
-
-function showQuizScreen() {
-  document.getElementById('quizContainer').classList.add('active');
-  document.getElementById('map').style.display = 'none';
-  document.querySelector('.helper').style.display = 'none';
-}
-
-function hideQuizScreen() {
-  document.getElementById('quizContainer').classList.remove('active');
-  document.getElementById('map').style.display = '';
-  document.querySelector('.helper').style.display = '';
-  quizState = null;
-}
-
-function renderCurrentQuestion() {
-  const quiz = document.getElementById('quizContainer');
-  if (quizState.currentIdx >= quizState.questions.length) {
-    renderQuizResult();
-    return;
-  }
-  const q = quizState.questions[quizState.currentIdx];
-  
-  // 모드별 질문 영역 HTML
-  let questionHTML = '';
-  if (q.mode === 'transfer-in') {
-    questionHTML = `
-      <div class="quiz-question">이 역은 어느 노선일까요?</div>
-      <div class="quiz-station-name">${q.stationName}</div>
-    `;
-  } else if (q.mode === 'transfer-out') {
-    questionHTML = `
-      <div class="quiz-question">이 역에서 갈아탈 수 <b>없는</b> 호선은?</div>
-      <div class="quiz-station-name">${q.stationName}</div>
-    `;
-  } else if (q.mode === 'terminal') {
-    const badgeColor = TRANSFER_COLORS[q.lineKey] || '#9ca3af';
-    const badgeText = /^\d$/.test(q.lineKey) ? q.lineKey : (TRANSFER_BADGE[q.lineKey] || q.lineKey);
-    questionHTML = `
-      <div class="quiz-question">이 노선의 <b>${q.direction} 역</b>은?</div>
-      <div class="quiz-station-name" style="font-size:24px;">
-        <span class="quiz-line-badge-big" style="background:${badgeColor}">${badgeText}</span>${q.lineName}
+<!-- 설정 -->
+<div class="sheet-overlay" id="settingsOverlay">
+  <div class="sheet narrow">
+    <div class="sheet-head">
+      <b>⚙️ 설정</b>
+      <button class="sheet-close" data-close="settingsOverlay">✕</button>
+    </div>
+    <div class="set-group">
+      <label class="set-row"><span>한국어 목소리</span><select id="setKoVoice"></select></label>
+      <label class="set-row"><span>영어 목소리</span><select id="setEnVoice"></select></label>
+      <div class="set-row"><span>말 빠르기</span>
+        <div class="seg" id="setRate">
+          <button data-v="0.85">느리게</button><button data-v="1">보통</button><button data-v="1.2">빠르게</button>
+        </div>
       </div>
-    `;
-  } else if (q.mode === 'color') {
-    questionHTML = `
-      <div class="quiz-question">이 색은 어느 호선?</div>
-      <div class="quiz-color-box" style="background:${q.color}"></div>
-    `;
-  }
-  
-  // 모드별 옵션 영역 HTML (모드 3은 역명 텍스트, 나머지는 호선 뱃지)
-  let optionsHTML;
-  if (q.mode === 'terminal') {
-    optionsHTML = q.options.map(opt => `
-      <button class="quiz-option" data-option="${opt}">${opt}</button>
-    `).join('');
-  } else {
-    optionsHTML = q.options.map(opt => `
-      <button class="quiz-option" data-option="${opt}">
-        <span class="quiz-line-badge" style="background:${TRANSFER_COLORS[opt]||'#9ca3af'}">${/^\d$/.test(opt) ? opt : (TRANSFER_BADGE[opt] || opt)}</span>
-        ${TRANSFER_NAMES_KO[opt] || opt}
-      </button>
-    `).join('');
-  }
-  
-  quiz.innerHTML = `
-    <div class="quiz-progress">문제 ${quizState.currentIdx + 1} / ${quizState.questions.length}  ·  맞힘 ${quizState.score}개</div>
-    ${questionHTML}
-    <div class="quiz-options">
-      ${optionsHTML}
+      <div class="set-row"><span>영어 방송</span><button class="toggle" id="setEnglish"></button></div>
+      <div class="set-row"><span>영어 방송 속 역 이름을<br><small>한국어 목소리로 읽기</small></span><button class="toggle" id="setEnNameKo"></button></div>
+      <div class="set-row"><span>안전 안내방송 (가끔)</span><button class="toggle" id="setSafety"></button></div>
+      <button class="go wide" id="setTest">🔊 들어보기</button>
     </div>
-    <div class="quiz-feedback" id="quizFeedback">&nbsp;</div>
-  `;
-  
-  quiz.querySelectorAll('.quiz-option').forEach(btn => {
-    btn.addEventListener('click', () => handleQuizAnswer(btn));
-  });
-}
+    <p class="sheet-desc" id="installHint">목소리가 어색하면 다른 목소리를 골라보세요. 기기마다 들어있는 목소리가 달라요.</p>
+    <button class="go wide ghost" id="installBtn" hidden>📲 홈 화면에 앱으로 설치</button>
+  </div>
+</div>
 
-function handleQuizAnswer(btn) {
-  const q = quizState.questions[quizState.currentIdx];
-  const selected = btn.dataset.option;
-  const isCorrect = q.acceptedAnswers.includes(selected);
-  
-  document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
-  const feedback = document.getElementById('quizFeedback');
-  
-  // 모드별 정답 라벨
-  function getCorrectLabel() {
-    if (q.mode === 'terminal') return q.acceptedAnswers[0] + ' 역';
-    const ans = q.mode === 'transfer-in' ? q.displayCorrect : q.acceptedAnswers[0];
-    return TRANSFER_NAMES_KO[ans] || ans;
-  }
-  
-  if (isCorrect) {
-    btn.classList.add('correct');
-    quizState.score++;
-    feedback.className = 'quiz-feedback correct';
-    feedback.textContent = '✅ 정답이에요!';
-  } else {
-    btn.classList.add('wrong');
-    document.querySelectorAll('.quiz-option').forEach(b => {
-      if (q.acceptedAnswers.includes(b.dataset.option)) b.classList.add('correct');
-    });
-    feedback.className = 'quiz-feedback wrong';
-    feedback.textContent = `❌ 아쉬워요! 정답은 ${getCorrectLabel()}이에요`;
-  }
-  
-  setTimeout(() => {
-    quizState.currentIdx++;
-    renderCurrentQuestion();
-  }, 1800);
-}
-
-function renderQuizResult() {
-  const quiz = document.getElementById('quizContainer');
-  const total = quizState.questions.length;
-  const score = quizState.score;
-  let msg;
-  if (score === total) msg = '🎉 완벽해요!';
-  else if (score >= Math.ceil(total * 0.6)) msg = '👍 잘했어요!';
-  else if (score >= Math.ceil(total * 0.3)) msg = '🚇 거의 다 왔어요!';
-  else msg = '💪 다시 도전해볼까요?';
-  
-  quiz.innerHTML = `
-    <div class="quiz-result">
-      <div class="quiz-result-msg">${msg}</div>
-      <div class="quiz-result-score">${score} / ${total}</div>
-      <button class="quiz-btn" id="quizRestart">다시 도전</button>
-      <button class="quiz-btn secondary" id="quizExit">처음으로</button>
-    </div>
-  `;
-  
-  document.getElementById('quizRestart').addEventListener('click', startQuiz);
-  document.getElementById('quizExit').addEventListener('click', hideQuizScreen);
-}
-
-document.getElementById('quizBtn').addEventListener('click', () => {
-  if (quizState) {
-    hideQuizScreen();
-  } else if (chosungState) {
-    hideChosungScreen();
-    startQuiz();
-  } else {
-    startQuiz();
-  }
-});
-
-// === 🔤 초성 퀴즈 ===
-const CHOSUNG_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-let chosungState = null;
-
-// 한글 문자열 → 초성 문자열 (한글 아닌 글자는 그대로 유지)
-function getChosung(str) {
-  let out = '';
-  for (const ch of str) {
-    const code = ch.charCodeAt(0);
-    if (code >= 0xAC00 && code <= 0xD7A3) {
-      out += CHOSUNG_LIST[Math.floor((code - 0xAC00) / 588)];
-    } else {
-      out += ch;
-    }
-  }
-  return out;
-}
-
-// 순수 한글 역명인지 (숫자·영문·특수문자 없는 역만 출제)
-function isPureHangul(name) {
-  for (const ch of name) {
-    const code = ch.charCodeAt(0);
-    if (!(code >= 0xAC00 && code <= 0xD7A3)) return false;
-  }
-  return true;
-}
-
-// 1~9호선 역 후보 수집 (역명 → {lines:Set, transfers:Set, neighbors:Set})
-function buildChosungPool() {
-  const lineKeys = ['1','1_2','2','3','4','5','5_2','6','7','8','9'];
-  const baseOf = { '1_2':'1', '5_2':'5' };
-  const pool = {};
-  lineKeys.forEach(k => {
-    const stations = lineData[k].stations;
-    const baseLine = baseOf[k] || k;
-    stations.forEach((s, i) => {
-      if (!isPureHangul(s.name)) return;
-      if (!pool[s.name]) pool[s.name] = { lines: new Set(), transfers: new Set(), neighbors: new Set() };
-      pool[s.name].lines.add(baseLine);
-      s.transfers.forEach(t => pool[s.name].transfers.add(t));
-      // 인접역(이전/다음) 중 순수 한글인 것만
-      if (i > 0 && isPureHangul(stations[i-1].name)) pool[s.name].neighbors.add(stations[i-1].name);
-      if (i < stations.length-1 && isPureHangul(stations[i+1].name)) pool[s.name].neighbors.add(stations[i+1].name);
-    });
-  });
-  return pool;
-}
-
-// 노선 표시명 (숫자는 "○호선", 나머지는 TRANSFER_NAMES_KO)
-function lineLabel(key) {
-  if (/^\d$/.test(key)) return key + '호선';
-  return TRANSFER_NAMES_KO[key] || key;
-}
-
-// 힌트 3개 생성 (순서 고정: 1노선/환승, 2첫글자, 3인접역)
-function buildChosungHints(name, info) {
-  const hints = [];
-  // 힌트1: 속한 노선 + 환승 노선 안내
-  const allLines = new Set([...info.lines, ...info.transfers]);
-  const lineArr = [...allLines];
-  if (lineArr.length >= 2) {
-    const labels = lineArr.map(lineLabel);
-    hints.push(`${labels.join(', ')}에서 만날 수 있어요`);
-  } else {
-    hints.push(`${lineLabel(lineArr[0])} 역이에요`);
-  }
-  // 힌트2: 첫 글자 공개
-  hints.push(`첫 글자는 '${name[0]}'이에요`);
-  // 힌트3: 인접역
-  const neighbors = [...info.neighbors];
-  if (neighbors.length > 0) {
-    const nb = neighbors[Math.floor(Math.random() * neighbors.length)];
-    hints.push(`${nb} 옆에 있는 역이에요`);
-  } else {
-    // 인접역이 없으면 글자 수로 대체 (항상 3개 유지)
-    hints.push(`${name.length}글자 역이에요`);
-  }
-  return hints;
-}
-
-function generateChosungQuestions(n) {
-  const pool = buildChosungPool();
-  const names = Object.keys(pool);
-  // 셔플 후 앞에서 n개 (중복 역명 없음)
-  const shuffled = names.sort(() => Math.random() - 0.5);
-  const questions = [];
-  for (const name of shuffled) {
-    if (questions.length >= n) break;
-    questions.push({
-      answer: name,
-      chosung: getChosung(name),
-      hints: buildChosungHints(name, pool[name])
-    });
-  }
-  return questions;
-}
-
-function startChosungQuiz() {
-  if (autoMode || isPlaying) { alert('안내방송 중에는 퀴즈를 시작할 수 없어요!'); return; }
-  stopAnnounce();
-  chosungState = { questions: generateChosungQuestions(5), currentIdx: 0, score: 0, hintsShown: 1 };
-  showChosungScreen();
-  renderChosungQuestion();
-}
-
-function showChosungScreen() {
-  document.getElementById('quizContainer').classList.add('active');
-  document.getElementById('map').style.display = 'none';
-  document.querySelector('.helper').style.display = 'none';
-}
-
-function hideChosungScreen() {
-  document.getElementById('quizContainer').classList.remove('active');
-  document.getElementById('map').style.display = '';
-  document.querySelector('.helper').style.display = '';
-  chosungState = null;
-}
-
-// 정답 정규화: 공백 제거 + 끝의 "역" 접미사 제거
-function normalizeAnswer(str) {
-  let s = str.trim().replace(/\s+/g, '');
-  if (s.length > 1 && s.endsWith('역')) s = s.slice(0, -1);
-  return s;
-}
-
-function renderChosungQuestion() {
-  const quiz = document.getElementById('quizContainer');
-  if (chosungState.currentIdx >= chosungState.questions.length) {
-    renderChosungResult();
-    return;
-  }
-  const q = chosungState.questions[chosungState.currentIdx];
-  const shown = chosungState.hintsShown;
-  
-  const hintsHTML = q.hints.slice(0, shown).map((h, i) =>
-    `<div class="chosung-hint">💡 힌트${i+1}. ${h}</div>`
-  ).join('');
-  
-  const moreHintBtn = shown < q.hints.length
-    ? `<button class="chosung-hint-btn" id="chosungMoreHint">힌트 더 보기 (${shown}/${q.hints.length})</button>`
-    : `<button class="chosung-hint-btn" disabled>힌트를 모두 봤어요</button>`;
-  
-  quiz.innerHTML = `
-    <div class="quiz-progress">문제 ${chosungState.currentIdx + 1} / ${chosungState.questions.length}  ·  맞힘 ${chosungState.score}개</div>
-    <div class="chosung-display">${q.chosung}</div>
-    <div class="chosung-input-row">
-      <input class="chosung-input" id="chosungInput" type="text" placeholder="역 이름을 입력하세요" autocomplete="off" />
-      <button class="chosung-submit" id="chosungSubmit">확인</button>
-    </div>
-    <div class="quiz-feedback" id="chosungFeedback">&nbsp;</div>
-    <div class="chosung-hints">${hintsHTML}</div>
-    ${moreHintBtn}
-    <button class="chosung-skip" id="chosungSkip">모르겠어요, 넘어갈래요</button>
-  `;
-  
-  const input = document.getElementById('chosungInput');
-  // 자동 포커스 제거: 아이가 입력창을 탭할 때만 키보드가 올라옴
-  // 포커스 시 초성+입력창이 화면 상단에 오도록 스크롤 (키보드 가림 대응)
-  input.addEventListener('focus', () => {
-    setTimeout(() => {
-      const disp = quiz.querySelector('.chosung-display');
-      if (disp) disp.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300); // 키보드 애니메이션 후 스크롤
-  });
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitChosungAnswer(); });
-  document.getElementById('chosungSubmit').addEventListener('click', submitChosungAnswer);
-  document.getElementById('chosungSkip').addEventListener('click', () => revealChosungAnswer(false));
-  const moreBtn = document.getElementById('chosungMoreHint');
-  if (moreBtn) moreBtn.addEventListener('click', () => {
-    // 재렌더링 전에 입력값 보존 (포커스는 복귀시키지 않아 키보드가 뜨지 않음)
-    const keep = document.getElementById('chosungInput').value;
-    chosungState.hintsShown++;
-    renderChosungQuestion();
-    const inp = document.getElementById('chosungInput');
-    if (inp) inp.value = keep;
-  });
-}
-
-function submitChosungAnswer() {
-  const input = document.getElementById('chosungInput');
-  if (!input) return;
-  const q = chosungState.questions[chosungState.currentIdx];
-  const guess = normalizeAnswer(input.value);
-  if (guess === '') { input.focus(); return; }
-  const correct = normalizeAnswer(q.answer);
-  if (guess === correct) {
-    revealChosungAnswer(true);
-  } else {
-    const feedback = document.getElementById('chosungFeedback');
-    feedback.className = 'quiz-feedback wrong';
-    feedback.textContent = '❌ 아니에요, 다시 해볼까요?';
-    input.focus();
-    input.select();
-  }
-}
-
-// isCorrect=true면 정답 처리, false면 스킵(정답 공개)
-function revealChosungAnswer(isCorrect) {
-  const q = chosungState.questions[chosungState.currentIdx];
-  const feedback = document.getElementById('chosungFeedback');
-  document.getElementById('chosungInput').disabled = true;
-  document.getElementById('chosungSubmit').disabled = true;
-  const skipBtn = document.getElementById('chosungSkip');
-  if (skipBtn) skipBtn.style.display = 'none';
-  const moreBtn = document.getElementById('chosungMoreHint');
-  if (moreBtn) moreBtn.disabled = true;
-  
-  if (isCorrect) {
-    chosungState.score++;
-    feedback.className = 'quiz-feedback correct';
-    feedback.textContent = '✅ 정답이에요!';
-  } else {
-    feedback.className = 'quiz-feedback wrong';
-    feedback.textContent = `정답은 '${q.answer}' 이에요`;
-  }
-  
-  setTimeout(() => {
-    chosungState.currentIdx++;
-    chosungState.hintsShown = 1;
-    renderChosungQuestion();
-  }, 1800);
-}
-
-function renderChosungResult() {
-  const quiz = document.getElementById('quizContainer');
-  const total = chosungState.questions.length;
-  const score = chosungState.score;
-  let msg;
-  if (score === total) msg = '🎉 완벽해요!';
-  else if (score >= Math.ceil(total * 0.6)) msg = '👍 잘했어요!';
-  else if (score >= Math.ceil(total * 0.3)) msg = '🚇 거의 다 왔어요!';
-  else msg = '💪 다시 도전해볼까요?';
-  
-  quiz.innerHTML = `
-    <div class="quiz-result">
-      <div class="quiz-result-msg">${msg}</div>
-      <div class="quiz-result-score">${score} / ${total}</div>
-      <button class="quiz-btn" id="chosungRestart">다시 도전</button>
-      <button class="quiz-btn secondary" id="chosungExit">처음으로</button>
-    </div>
-  `;
-  document.getElementById('chosungRestart').addEventListener('click', startChosungQuiz);
-  document.getElementById('chosungExit').addEventListener('click', hideChosungScreen);
-}
-
-document.getElementById('chosungBtn').addEventListener('click', () => {
-  if (chosungState) {
-    hideChosungScreen();
-  } else if (quizState) {
-    hideQuizScreen();
-    startChosungQuiz();
-  } else {
-    startChosungQuiz();
-  }
-});
-
-// === 🎫 내 기록 (실제 타본 호선) ===
-function renderLineBadge() {
-  const line = lineData[currentLine];
-  const badge = document.getElementById('lineBadge');
-  badge.textContent = line.badge;
-  badge.style.background = line.color;
-  const baseKey = getBaseLineKey(currentLine);
-  if (riddenLines.includes(baseKey)) {
-    const mark = document.createElement('span');
-    mark.className = 'ridden-mark';
-    mark.textContent = '⭐';
-    badge.appendChild(mark);
-  }
-}
-
-function openRiddenModal() {
-  if (autoMode || isPlaying) {
-    alert('안내방송 중에는 사용할 수 없어요!');
-    return;
-  }
-  document.getElementById('riddenModal').classList.add('active');
-  renderRiddenList();
-}
-
-function closeRiddenModal() {
-  document.getElementById('riddenModal').classList.remove('active');
-}
-
-function renderRiddenList() {
-  const list = document.getElementById('riddenList');
-  const baseLines = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '경의중앙', '경춘', '공항철도'];
-  const baseLineNames = {
-    '1':'1호선', '2':'2호선', '3':'3호선', '4':'4호선', '5':'5호선',
-    '6':'6호선', '7':'7호선', '8':'8호선', '9':'9호선',
-    '경의중앙':'경의중앙선', '경춘':'경춘선', '공항철도':'공항철도'
-  };
-  
-  list.innerHTML = baseLines.map(b => `
-    <div class="ridden-row">
-      <div class="ridden-line-badge" style="background:${TRANSFER_COLORS[b]}">${/^\d$/.test(b) ? b : (TRANSFER_BADGE[b] || b)}</div>
-      <div class="ridden-line-name">${baseLineNames[b]}</div>
-      <div class="toggle-switch ${riddenLines.includes(b) ? 'on' : ''}" data-line="${b}"></div>
-    </div>
-  `).join('');
-  
-  list.querySelectorAll('.toggle-switch').forEach(t => {
-    t.addEventListener('click', () => {
-      const lineKey = t.dataset.line;
-      if (riddenLines.includes(lineKey)) {
-        riddenLines = riddenLines.filter(x => x !== lineKey);
-        t.classList.remove('on');
-      } else {
-        riddenLines.push(lineKey);
-        t.classList.add('on');
-      }
-      try { localStorage.setItem('riddenLines', JSON.stringify(riddenLines)); } catch(_) {}
-      // 헤더 line-badge와 노선 드롭다운 즉시 갱신
-      renderLineBadge();
-      renderLineSelect();
-    });
-  });
-}
-
-document.getElementById('riddenBtn').addEventListener('click', openRiddenModal);
-document.getElementById('riddenModalClose').addEventListener('click', closeRiddenModal);
-document.getElementById('riddenModal').addEventListener('click', (e) => {
-  if (e.target.id === 'riddenModal') closeRiddenModal();
-});
-
-renderLineSelect();
-renderLine(currentLine);
-setLedBoard('안전하고 편리한 지하철을 이용해 주셔서 감사합니다.');
-</script>
+<script src="lines.js"></script>
+<script src="network.js"></script>
+<script src="voice.js"></script>
+<script src="quiz.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

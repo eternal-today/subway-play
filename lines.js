@@ -1,3 +1,9 @@
+// 노선 데이터
+// - stations 배열 순서 = 노선도 순서
+// - transfers: 이 역에서 갈아탈 수 있는 노선 키 (앱에 없는 노선도 표시용으로 적어둠)
+// - 2호선은 순환선: 마지막 역(충정로)과 첫 역(시청)이 이어져 있음 (network.js에서 처리)
+// - 6호선 응암순환: 응암→역촌→불광→독바위→연신내→구산→응암 한 방향으로만 돌고,
+//   본선은 응암↔새절로 이어짐 (구산과 새절은 이웃 역이 아님, network.js에서 처리)
 const lineData = {
 '1': { name:'1호선(인천행)', nameEn:'Line 1 (Incheon)', color:'#0052A4', badge:'1', stations:[
   { name:'연천', nameEn:'Yeoncheon', transfers:[] },
@@ -36,7 +42,7 @@ const lineData = {
   { name:'종로3가', nameEn:'Jongno 3(sam)-ga', transfers:['3','5'] },
   { name:'종각', nameEn:'Jonggak', transfers:[] },
   { name:'시청', nameEn:'City Hall', transfers:['2'] },
-  { name:'서울역', nameEn:'Seoul Station', transfers:['4','공항철도','경의중앙'] },
+  { name:'서울역', nameEn:'Seoul Station', transfers:['4','공항철도','경의중앙','GTX-A'] },
   { name:'남영', nameEn:'Namyeong', transfers:[] },
   { name:'용산', nameEn:'Yongsan', transfers:['경의중앙'] },
   { name:'노량진', nameEn:'Noryangjin', transfers:['9'] },
@@ -103,7 +109,7 @@ const lineData = {
   { name:'종로3가', nameEn:'Jongno 3(sam)-ga', transfers:['3','5'] },
   { name:'종각', nameEn:'Jonggak', transfers:[] },
   { name:'시청', nameEn:'City Hall', transfers:['2'] },
-  { name:'서울역', nameEn:'Seoul Station', transfers:['4','공항철도','경의중앙'] },
+  { name:'서울역', nameEn:'Seoul Station', transfers:['4','공항철도','경의중앙','GTX-A'] },
   { name:'남영', nameEn:'Namyeong', transfers:[] },
   { name:'용산', nameEn:'Yongsan', transfers:['경의중앙'] },
   { name:'노량진', nameEn:'Noryangjin', transfers:['9'] },
@@ -199,7 +205,7 @@ const lineData = {
   { name:'정발산', nameEn:'Jeongbalsan', transfers:[] },
   { name:'마두', nameEn:'Madu', transfers:[] },
   { name:'백석', nameEn:'Baekseok', transfers:[] },
-  { name:'대곡', nameEn:'Daegok', transfers:['경의중앙','GTX-A'] },
+  { name:'대곡', nameEn:'Daegok', transfers:['경의중앙','GTX-A','서해'] },
   { name:'화정', nameEn:'Hwajeong', transfers:[] },
   { name:'원당', nameEn:'Wondang', transfers:[] },
   { name:'원흥', nameEn:'Wonheung', transfers:[] },
@@ -568,7 +574,7 @@ const lineData = {
   { name:'풍산', nameEn:'Pungsan', transfers:[] },
   { name:'백마', nameEn:'Baengma', transfers:[] },
   { name:'곡산', nameEn:'Goksan', transfers:[] },
-  { name:'대곡', nameEn:'Daegok', transfers:['3','GTX-A'] },
+  { name:'대곡', nameEn:'Daegok', transfers:['3','GTX-A','서해'] },
   { name:'능곡', nameEn:'Neunggok', transfers:[] },
   { name:'행신', nameEn:'Haengsin', transfers:[] },
   { name:'강매', nameEn:'Gangmae', transfers:[] },
@@ -653,3 +659,4 @@ const lineData = {
   { name:'인천공항2터미널', nameEn:'Incheon Int\'l Airport Terminal 2', transfers:[] }
 ]}
 };
+if (typeof module !== 'undefined') module.exports = { lineData };
