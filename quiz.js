@@ -155,21 +155,25 @@ const Quiz = (function () {
     const q = state.questions[state.cur];
     state.locked = false;
     el.innerHTML = `<div class="qwrap">${pips(state.cur, state.questions.length)}
-      <div class="qcol">
+      <div class="qcol cho-main">
         <div class="cho">${escQ(q.cho)}</div>
         <div class="cho-in"><input id="choInput" type="text" inputmode="text" placeholder="역 이름을 써보세요" autocomplete="off" autocapitalize="off" spellcheck="false" /><button class="go" id="choOk">확인</button></div>
         <div class="qfb" id="qfb"></div>
         <button class="skip" id="choSkip">모르겠어요, 넘어갈래요</button>
       </div>
-      <div class="qcol">
+      <div class="qcol cho-side">
         <div class="hints" id="choHints">${Array.from({ length: state.shown }, (_, i) => hintHTML(q, i)).join('')}</div>
         <button class="hint-more" id="choMore"${state.shown >= q.hints.length ? ' disabled' : ''}>${moreLabel()}</button>
       </div></div>`;
     const input = el.querySelector('#choInput');
     // 자동 포커스 없음: 아이가 입력칸을 눌렀을 때만 키보드가 올라옴
-    input.addEventListener('focus', () => setTimeout(() => {
-      const c = el.querySelector('.cho'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300));
+    // 키보드가 올라오면 한 번에 '입력 화면'(초성+입력칸+힌트를 위쪽에 작게)으로 바꿈 → 화면이 흔들리지 않음
+    input.addEventListener('focus', () => typing(true));
+    input.addEventListener('blur', () => typing(false));
+    // 확인·힌트 버튼을 눌러도 키보드가 내려가지 않게 (입력칸 포커스 유지)
+    ['#choOk', '#choMore'].forEach(sel => el.querySelector(sel).addEventListener('pointerdown', e => {
+      if (document.activeElement === input) e.preventDefault();
+    }));
     input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) submit(); });
     el.querySelector('#choOk').addEventListener('click', submit);
     el.querySelector('#choSkip').addEventListener('click', () => reveal(false));
@@ -202,6 +206,26 @@ const Quiz = (function () {
     timer = setTimeout(() => { state.cur++; state.shown = 1; renderChosung(); }, 1800);
   }
 
-  api.stop = function () { clearTimeout(timer); state = null; if (el) el.innerHTML = ''; };
+  // 입력 화면 전환: 키보드가 다 올라온 뒤가 아니라 누르는 순간 한 번만 배치를 바꿈
+  let vvBase = 0, kbdSeen = false;
+  function typing(on) {
+    document.body.classList.toggle('typing', on);
+    if (on) {
+      vvBase = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      kbdSeen = false;
+      if (el) el.scrollTop = 0;
+      window.scrollTo(0, 0);
+    }
+  }
+  // 안드로이드 '뒤로' 버튼으로 키보드만 내리면 입력칸이 포커스를 유지하므로, 그때도 원래 화면으로 복귀
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => {
+    if (!document.body.classList.contains('typing')) return;
+    const h = window.visualViewport.height;
+    if (h < vvBase * 0.8) kbdSeen = true;
+    else if (kbdSeen && h > vvBase * 0.9 && document.activeElement) document.activeElement.blur();
+    window.scrollTo(0, 0);
+  });
+
+  api.stop = function () { clearTimeout(timer); state = null; document.body.classList.remove('typing'); if (el) el.innerHTML = ''; };
   return api;
 })();

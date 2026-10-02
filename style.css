@@ -303,6 +303,23 @@ body.running .stop-fab, body.speaking .stop-fab { display: block; }
 .hint-more:disabled { opacity: .45; }
 .skip { border: 0; background: none; color: #8A93A0; font-size: 14px; font-weight: 700; text-decoration: underline; padding: 8px; }
 
+/* 초성퀴즈는 위쪽 정렬 (키보드가 올라와 화면 높이가 바뀌어도 내용이 움직이지 않게) */
+body[data-mode="chosung"] .qwrap { margin: 0 auto; }
+/* 초성퀴즈 입력 중(키보드 올라옴): 한 줄 압축 배치 */
+body.typing .topbar { display: none; }
+body.typing .qwrap { grid-template-columns: 1fr; gap: 8px; padding: 8px 14px; }
+body.typing .qprog, body.typing .skip { display: none; }
+body.typing .cho-main { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
+body.typing .cho { flex: 0 0 auto; font-size: 44px; letter-spacing: 8px; padding: 4px 18px; }
+body.typing .cho-in { flex: 1; min-width: 240px; }
+body.typing .cho-in input, body.typing .cho-in .go { height: 56px; }
+body.typing .qfb { width: 100%; min-height: 0; padding: 6px; font-size: 15px; }
+body.typing .qfb:empty { display: none; }
+body.typing .cho-side { flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+body.typing .hints { flex-direction: row; flex-wrap: wrap; gap: 8px; flex: 1; }
+body.typing .hintx { padding: 8px 12px; font-size: 15px; animation: none; }
+body.typing .hint-more { height: auto; min-height: 40px; padding: 0 14px; font-size: 14px; }
+
 /* ── 세로 화면 (휴대폰·세로 태블릿) ── */
 @media (orientation: portrait), (max-width: 760px) {
   .stage { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
@@ -335,8 +352,6 @@ body.running .stop-fab, body.speaking .stop-fab { display: block; }
   .tool { width: 34px; height: 34px; }
   .qwrap { padding: 10px 16px 20px; gap: 12px; }
   .qprog { display: none; }
-  .cho { font-size: clamp(40px, 12vh, 80px); padding: 8px; letter-spacing: 10px; }
-  .cho-in input, .cho-in .go { height: 52px; }
   .qbig { padding: 14px 8px; font-size: clamp(32px, 11vh, 60px); }
   .hintx { padding: 10px 14px; font-size: 16px; }
   .sign-top { min-height: 110px; padding: 12px 20px; }
